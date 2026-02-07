@@ -33,9 +33,15 @@ export function ListViewOverlay({ listView, setListView, actTank, catchFish, tog
   if(!listView||!actTank)return null;
   const td=todayStr();
   const fishes=actTank.fishes||[];
-  const doCopy=(mode)=>{
+  const doCopy=async(mode)=>{
     const text=mode==="plain"?exportPlain(fishes,inclCompleted):exportRich(fishes,inclCompleted);
-    try{navigator.clipboard.writeText(text);}catch{}
+    try{
+      await navigator.clipboard.writeText(text);
+    }catch{
+      // Fallback for browsers that block async clipboard
+      const ta=document.createElement("textarea");ta.value=text;ta.style.cssText="position:fixed;left:-9999px";
+      document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);
+    }
     setCopyFlash(mode==="plain"?"Copied plain!":"Copied with details!");
     setCopyMenu(false);
     setTimeout(()=>setCopyFlash(""),1500);
