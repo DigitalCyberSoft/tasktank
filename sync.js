@@ -73,6 +73,11 @@ export async function tombstoneFish(syncId, encKey, fishId) {
   tankNode(syncId).get("f").get(fishId).put(ct);
 }
 
+export async function pushPeerInfo(syncId, encKey, deviceId, info) {
+  const ct = await encrypt(info, encKey);
+  tankNode(syncId).get("peers").get(deviceId).put(ct);
+}
+
 export async function pushFullTank(syncId, encKey, tank) {
   await pushTankMeta(syncId, encKey, {
     name: tank.name,
@@ -107,10 +112,18 @@ export function subscribeTank(syncId, encKey, onChange) {
     }
   });
 
+  // Subscribe to peer changes
+  node.get("peers").map().on(async (data, peerId) => {
+    if (!alive || !data || typeof data !== "string") return;
+    const info = await decrypt(data, encKey);
+    if (info) onChange({ type: "peer", peerId, data: info });
+  });
+
   return () => {
     alive = false;
     node.get("m").off();
     node.get("f").map().off();
+    node.get("peers").map().off();
   };
 }
 

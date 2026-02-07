@@ -12,6 +12,7 @@ import {
   pushTankMeta,
   pushFish,
   tombstoneFish,
+  pushPeerInfo,
   loadSyncKeys,
   saveSyncKeys,
 } from "./sync.js";
@@ -112,6 +113,42 @@ export default function useSync(tanks, setTanks, initP) {
                 : t
             )
           );
+        } else if (event.type === "peer") {
+          setTanks((prev) =>
+            prev.map((t) => {
+              if (t.id !== tankId) return t;
+              const peers = [...(t.peers || [])];
+              const { peerId, data: peerData } = event;
+
+              // If this peer left, remove them
+              if (peerData._left) {
+                return { ...t, peers: peers.filter((p) => p.deviceId !== peerId) };
+              }
+
+              // If this is our own entry, update myPermission
+              let myPermission = t.myPermission;
+              if (peerId === DEVICE_ID && peerData.permission) {
+                myPermission = peerData.permission;
+              }
+
+              // Upsert peer
+              const idx = peers.findIndex((p) => p.deviceId === peerId);
+              const peerEntry = {
+                deviceId: peerId,
+                deviceName: peerData.deviceName || (idx >= 0 ? peers[idx].deviceName : peerId.slice(0, 12)),
+                permission: peerData.permission || (idx >= 0 ? peers[idx].permission : "shared"),
+                pairedAt: peerData.joinedAt || (idx >= 0 ? peers[idx].pairedAt : new Date().toISOString()),
+                lastSyncAt: new Date().toISOString(),
+              };
+              if (idx >= 0) {
+                peers[idx] = peerEntry;
+              } else {
+                peers.push(peerEntry);
+              }
+
+              return { ...t, peers, myPermission };
+            })
+          );
         }
       } finally {
         // Delay clearing to avoid the immediate save re-pushing
@@ -141,6 +178,9 @@ export default function useSync(tanks, setTanks, initP) {
         const sk = keys[tank.id];
         if (!sk) continue;
         const { syncId, encKey } = sk;
+
+        // Skip pushes for readonly tanks
+        if (tank.ownerId && tank.ownerId !== DEVICE_ID && (tank.myPermission || "shared") === "readonly") continue;
 
         const prevTank = prev.find((t) => t.id === tank.id);
         if (!prevTank) continue;
@@ -226,7 +266,7 @@ export default function useSync(tanks, setTanks, initP) {
 
   const joinTank = useCallback(
     (pairData) => {
-      const { tankId, syncId, encKey } = pairData;
+      const { tankId, syncId, encKey, permission, recipientName } = pairData;
       if (!syncId || !encKey) return;
 
       const keys = syncKeysRef.current;
@@ -236,9 +276,58 @@ export default function useSync(tanks, setTanks, initP) {
 
       startSubscription(tankId, syncId, encKey);
       setSyncedTanks((prev) => new Set([...prev, tankId]));
+
+      // Announce self to peers via Gun
+      const deviceName = recipientName || (typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 30) : "Device");
+      pushPeerInfo(syncId, encKey, DEVICE_ID, {
+        deviceName,
+        permission: permission || "shared",
+        joinedAt: new Date().toISOString(),
+      });
     },
     [] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
-  return { syncStatus, syncedTanks, shareTank, joinTank };
+  const unsyncTank = useCallback(
+    (tankId) => {
+      const keys = syncKeysRef.current;
+      const sk = keys[tankId];
+
+      // Push _left to own peers entry so owner sees us removed
+      if (sk) {
+        pushPeerInfo(sk.syncId, sk.encKey, DEVICE_ID, { _left: true });
+      }
+
+      // Unsubscribe from Gun
+      if (unsubs.current[tankId]) {
+        unsubs.current[tankId]();
+        delete unsubs.current[tankId];
+      }
+
+      // Remove sync keys
+      delete keys[tankId];
+      syncKeysRef.current = keys;
+      saveSyncKeys(keys);
+
+      // Remove from syncedTanks
+      setSyncedTanks((prev) => {
+        const next = new Set(prev);
+        next.delete(tankId);
+        return next;
+      });
+    },
+    [] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  const updatePeerGun = useCallback(
+    (tankId, targetDeviceId, info) => {
+      const keys = syncKeysRef.current;
+      const sk = keys[tankId];
+      if (!sk) return;
+      pushPeerInfo(sk.syncId, sk.encKey, targetDeviceId, info);
+    },
+    [] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  return { syncStatus, syncedTanks, shareTank, joinTank, unsyncTank, updatePeerGun };
 }
