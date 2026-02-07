@@ -8,19 +8,44 @@ import { iconBtn, tinyBtn } from "./styles.js";
 export function DeleteModal({ delModal, setDelModal, tanks, confirmDelete }) {
   if(!delModal)return null;
   const tank=tanks.find(t=>t.id===delModal.tankId);if(!tank)return null;
-  const match=delModal.input.trim().toLowerCase()===tank.name.trim().toLowerCase();
+  const isEmpty=(tank.fishes||[]).length===0;
+  const match=isEmpty||delModal.input.trim().toLowerCase()===tank.name.trim().toLowerCase();
   return(<><div onClick={()=>setDelModal(null)} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.6)",zIndex:48}}/>
     <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:"min(320px, 88vw)",background:"rgba(12,8,8,.97)",border:"1px solid rgba(255,70,70,.15)",borderRadius:14,padding:20,zIndex:50,animation:"fadeIn .2s ease-out",boxShadow:"0 12px 40px rgba(0,0,0,.6)"}}>
-      <div style={{fontSize:22,textAlign:"center",marginBottom:8}}>{"\u26A0\uFE0F"}</div>
+      <div style={{fontSize:22,textAlign:"center",marginBottom:8}}>{isEmpty?"\uD83D\uDDD1\uFE0F":"\u26A0\uFE0F"}</div>
       <div style={{fontSize:12,fontWeight:700,textAlign:"center",color:"#FF4757",letterSpacing:2,marginBottom:6}}>DELETE TANK</div>
       <div style={{fontSize:10,textAlign:"center",opacity:.5,marginBottom:14,lineHeight:1.6}}>
-        Permanently destroy <b style={{color:"#eee"}}>{tank.name}</b> and {(tank.fishes||[]).length} fish. Type the name to confirm.</div>
-      <input autoFocus value={delModal.input} onChange={e=>setDelModal(p=>({...p,input:e.target.value}))} placeholder={tank.name}
-        style={{width:"100%",padding:"10px 12px",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,70,70,.15)",borderRadius:8,color:"#d0d8e4",fontSize:12,fontFamily:"inherit",boxSizing:"border-box",marginBottom:14}}/>
+        {isEmpty?<>Delete empty tank <b style={{color:"#eee"}}>{tank.name}</b>?</>
+        :<>Permanently destroy <b style={{color:"#eee"}}>{tank.name}</b> and {(tank.fishes||[]).length} fish. Type the name to confirm.</>}</div>
+      {!isEmpty&&<input autoFocus value={delModal.input} onChange={e=>setDelModal(p=>({...p,input:e.target.value}))} placeholder={tank.name}
+        style={{width:"100%",padding:"10px 12px",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,70,70,.15)",borderRadius:8,color:"#d0d8e4",fontSize:12,fontFamily:"inherit",boxSizing:"border-box",marginBottom:14}}/>}
       <div style={{display:"flex",gap:8}}>
         <button onClick={()=>setDelModal(null)} style={{flex:1,padding:"10px 0",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",borderRadius:8,color:"#a8b4c0",cursor:"pointer",fontSize:11,fontFamily:"inherit"}}>Cancel</button>
-        <button onClick={confirmDelete} disabled={!match} style={{flex:1,padding:"10px 0",border:"none",borderRadius:8,fontWeight:700,cursor:match?"pointer":"not-allowed",fontSize:11,fontFamily:"inherit",background:match?"linear-gradient(135deg,#FF4757,#c0392b)":"rgba(255,255,255,.03)",color:match?"#fff":"#444",opacity:match?1:.4}}>Delete Forever</button>
+        <button onClick={confirmDelete} disabled={!match} style={{flex:1,padding:"10px 0",border:"none",borderRadius:8,fontWeight:700,cursor:match?"pointer":"not-allowed",fontSize:11,fontFamily:"inherit",background:match?"linear-gradient(135deg,#FF4757,#c0392b)":"rgba(255,255,255,.03)",color:match?"#fff":"#444",opacity:match?1:.4}}>{isEmpty?"Delete":"Delete Forever"}</button>
       </div></div></>);
+}
+
+// ══════════════════════════════════════════════════════════════
+// NEW TANK MODAL
+// ══════════════════════════════════════════════════════════════
+export function NewTankModal({ newTankModal, setNewTankModal, onCreateTank }) {
+  const [name,setName]=useState("");
+  if(!newTankModal)return null;
+  const close=()=>{setNewTankModal(false);setName("");};
+  const doCreate=()=>{const n=name.trim();if(!n)return;onCreateTank(n);close();};
+  return(<><div onClick={close} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.6)",zIndex:48}}/>
+    <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:"min(320px, 88vw)",background:"rgba(8,14,28,.97)",border:"1px solid rgba(77,150,255,.15)",borderRadius:14,padding:20,zIndex:50,animation:"fadeIn .2s ease-out",boxShadow:"0 12px 40px rgba(0,0,0,.6)"}}>
+      <div style={{fontSize:22,textAlign:"center",marginBottom:8}}>{"\uD83D\uDC20"}</div>
+      <div style={{fontSize:12,fontWeight:700,textAlign:"center",color:"#4D96FF",letterSpacing:2,marginBottom:6}}>NEW TANK</div>
+      <div style={{fontSize:10,textAlign:"center",opacity:.5,marginBottom:14,lineHeight:1.6}}>Give your new tank a name.</div>
+      <input autoFocus value={name} onChange={e=>setName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")doCreate();}}
+        placeholder="Tank name\u2026"
+        style={{width:"100%",padding:"10px 12px",background:"rgba(255,255,255,.04)",border:"1px solid rgba(77,150,255,.15)",borderRadius:8,color:"#d0d8e4",fontSize:12,fontFamily:"inherit",boxSizing:"border-box",marginBottom:14}}/>
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={close} style={{flex:1,padding:"10px 0",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",borderRadius:8,color:"#a8b4c0",cursor:"pointer",fontSize:11,fontFamily:"inherit"}}>Cancel</button>
+        <button onClick={doCreate} disabled={!name.trim()} style={{flex:1,padding:"10px 0",border:"none",borderRadius:8,fontWeight:700,cursor:name.trim()?"pointer":"not-allowed",fontSize:11,fontFamily:"inherit",background:name.trim()?"linear-gradient(135deg,#4D96FF,#6BCB77)":"rgba(255,255,255,.03)",color:name.trim()?"#fff":"#444",opacity:name.trim()?1:.4}}>Create Tank</button>
+      </div>
+    </div></>);
 }
 
 // ══════════════════════════════════════════════════════════════

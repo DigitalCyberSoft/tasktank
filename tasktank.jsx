@@ -8,7 +8,7 @@ import CaughtPanel from "./CaughtPanel.jsx";
 import TopBar from "./TopBar.jsx";
 import TankDrawer from "./TankDrawer.jsx";
 import { DesktopInputBar, MobileInputBar } from "./InputBar.jsx";
-import { DeleteModal, ListViewOverlay, PurgeOverlay, ShareModal, JoinModal, BulkAddModal } from "./Modals.jsx";
+import { DeleteModal, NewTankModal, ListViewOverlay, PurgeOverlay, ShareModal, JoinModal, BulkAddModal } from "./Modals.jsx";
 
 // ══════════════════════════════════════════════════════════════
 // MAIN
@@ -39,6 +39,7 @@ export default function TaskTankApp(){
   const [joinModal,setJoinModal]=useState(false);
   const [bulkModal,setBulkModal]=useState(false);
   const [listView,setListView]=useState(false);
+  const [newTankModal,setNewTankModal]=useState(false);
 
   const isMobile=winW<768;
   const effectiveZoom=viewZoom===0?(isMobile?1:(zoomed?1:0)):viewZoom;
@@ -85,7 +86,8 @@ export default function TaskTankApp(){
   const onTE=useCallback(()=>{if(swipeEl.current){swipeEl.current.style.transition="transform .2s ease";swipeEl.current.style.transform="";}if(tchR.current.swiping){tchR.current.swiped=true;const{dx}=tchR.current;if(dx<-50)navTank(1);else if(dx>50)navTank(-1);setTimeout(()=>{tchR.current.swiped=false;},80);}},[navTank]);
 
   // TANK CRUD
-  const addTank=()=>{if(tanks.length>=MAX_TANKS)return;const id=uid();let n=tanks.length+1;while(tanks.some(t=>t.name===`Tank ${n}`))n++;surfT.current[id]=200+Math.random()*280;const t={id,name:`Tank ${n}`,fishes:[],speedIdx:2,ownerId:DEVICE_ID,peers:[]};setTanks(p=>[...p,t]);setActiveId(id);log("tank.add",{tankId:id,name:t.name});};
+  const openNewTank=()=>{if(tanks.length>=MAX_TANKS)return;setNewTankModal(true);};
+  const addTank=(name)=>{if(tanks.length>=MAX_TANKS)return;const id=uid();surfT.current[id]=200+Math.random()*280;const t={id,name,fishes:[],speedIdx:2,ownerId:DEVICE_ID,peers:[]};setTanks(p=>[...p,t]);setActiveId(id);log("tank.add",{tankId:id,name:t.name});};
   const confirmDelete=()=>{if(!delModal)return;const tid=delModal.tankId;const tank=tanks.find(t=>t.id===tid);if(tank)(tank.fishes||[]).forEach(f=>{delete pR.current[f.id];delete fE.current[f.id];delete fB.current[f.id];delete fL.current[f.id];});delete tE.current[tid];delete surfT.current[tid];if(caught?.tankId===tid)setCaught(null);if(nukeId===tid){setNukeId(null);setKeepers(new Set());}setTanks(p=>{const nx=p.filter(t=>t.id!==tid);if(activeId===tid)setActiveId(nx[0]?.id||null);return nx;});log("tank.delete",{tankId:tid});setDelModal(null);if(tanks.length<=2&&viewZoom>1)setViewZoom(0);};
   const moveTank=(tid,dir)=>{setTanks(p=>{const i=p.findIndex(t=>t.id===tid);const ni=clamp(i+dir,0,p.length-1);if(i===ni)return p;const a=[...p];[a[i],a[ni]]=[a[ni],a[i]];log("tank.reorder",{tankId:tid,from:i,to:ni});return a;});};
   const renameTank=(tid,name)=>{if(!name.trim())return;setTanks(p=>p.map(t=>t.id===tid?{...t,name:name.trim()}:t));log("tank.rename",{tankId:tid,name:name.trim()});};
@@ -224,7 +226,7 @@ export default function TaskTankApp(){
           <div style={{fontSize:48,opacity:.15}}>{"\uD83D\uDC20"}</div>
           <div style={{fontSize:14,opacity:.2,letterSpacing:4,fontWeight:700}}>TASKTANK</div>
           <div style={{fontSize:10,opacity:.1,textAlign:"center",maxWidth:220,lineHeight:1.6}}>Your tasks are fish. They swim to remind you. Create your first tank.</div>
-          <button onClick={addTank} style={{marginTop:8,padding:"10px 24px",background:"linear-gradient(135deg,#4D96FF,#6BCB77)",border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"inherit",letterSpacing:1}}>+ Create Tank</button>
+          <button onClick={openNewTank} style={{marginTop:8,padding:"10px 24px",background:"linear-gradient(135deg,#4D96FF,#6BCB77)",border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"inherit",letterSpacing:1}}>+ Create Tank</button>
         </div>
       ):showGrid?(
         /* ── DESKTOP GRID ── */
@@ -256,7 +258,7 @@ export default function TaskTankApp(){
             </div>);
           })}
           {tanks.length<MAX_TANKS&&(
-            <div className="addc" onClick={addTank} style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",border:"1.5px dashed rgba(255,255,255,.05)",borderRadius:8,cursor:"pointer",background:"rgba(255,255,255,.006)",minHeight:0}}>
+            <div className="addc" onClick={openNewTank} style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",border:"1.5px dashed rgba(255,255,255,.05)",borderRadius:8,cursor:"pointer",background:"rgba(255,255,255,.006)",minHeight:0}}>
               <div style={{fontSize:32,opacity:.13,marginBottom:3,lineHeight:1}}>+</div>
               <div style={{fontSize:11,opacity:.08,letterSpacing:2}}>NEW TANK</div>
             </div>)}
@@ -273,7 +275,7 @@ export default function TaskTankApp(){
           <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,padding:20}}>
             <div style={{fontSize:48,opacity:.15}}>{"\uD83D\uDC20"}</div>
             <div style={{fontSize:14,opacity:.2,letterSpacing:4,fontWeight:700}}>TASKTANK</div>
-            <button onClick={addTank} style={{marginTop:8,padding:"10px 24px",background:"linear-gradient(135deg,#4D96FF,#6BCB77)",border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"inherit",letterSpacing:1}}>+ Create Tank</button>
+            <button onClick={openNewTank} style={{marginTop:8,padding:"10px 24px",background:"linear-gradient(135deg,#4D96FF,#6BCB77)",border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"inherit",letterSpacing:1}}>+ Create Tank</button>
           </div>
         ))
       )}
@@ -299,10 +301,13 @@ export default function TaskTankApp(){
       {/* ══ TANK DRAWER (mobile) ══ */}
       <TankDrawer drawer={drawer} setDrawer={setDrawer} tanks={tanks} activeId={activeId} setActiveId={setActiveId}
         moveTank={moveTank} renameTank={renameTank} setDelModal={setDelModal} cycleSpeed={cycleSpeed}
-        addTank={addTank} setJoinModal={setJoinModal} MAX_TANKS={MAX_TANKS}/>
+        addTank={openNewTank} setJoinModal={setJoinModal} MAX_TANKS={MAX_TANKS}/>
 
       {/* ══ DELETE MODAL ══ */}
       <DeleteModal delModal={delModal} setDelModal={setDelModal} tanks={tanks} confirmDelete={confirmDelete}/>
+
+      {/* ══ NEW TANK MODAL ══ */}
+      <NewTankModal newTankModal={newTankModal} setNewTankModal={setNewTankModal} onCreateTank={addTank}/>
 
       {/* ══ LIST VIEW OVERLAY ══ */}
       <ListViewOverlay listView={listView} setListView={setListView} actTank={actTank} catchFish={catchFish} toggleFishComplete={toggleFishComplete}/>
