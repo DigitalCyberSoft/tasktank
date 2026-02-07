@@ -25,10 +25,10 @@ export default function TankRenderer({ tank, caught, showSingle, effectiveZoom, 
             {dl&&<span style={{position:"absolute",top:-2,left:-2,fontSize:6,pointerEvents:"none",color:dl.color,fontWeight:700,textShadow:"0 1px 3px rgba(0,0,0,.9)"}}>{"\u25CF"}</span>}
           </div>
           <div ref={el=>{if(el)fL.current[fish.id]=el;}} style={{
-            textAlign:"center",fontSize:showSingle?10:9,lineHeight:1.2,
+            textAlign:"center",fontSize:showSingle?10:10,lineHeight:1.2,
             color:fc?"rgba(46,213,115,.5)":(dl?.color||(imp.color?imp.color+"dd":"rgba(255,255,255,.6)")),
             marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
-            maxWidth:showSingle?120:90,textShadow:"0 1px 5px rgba(0,0,0,.95)",pointerEvents:"none",
+            maxWidth:showSingle?120:110,textShadow:"0 1px 5px rgba(0,0,0,.95)",pointerEvents:"none",
             letterSpacing:.3,background:"rgba(0,0,0,.4)",padding:"2px 6px",borderRadius:4,transformOrigin:"center top",
             textDecoration:fc?"line-through":"none"}}>
             {fish.task.length>truncLen?fish.task.slice(0,truncLen-2)+"\u2026":fish.task}

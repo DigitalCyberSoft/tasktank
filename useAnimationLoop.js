@@ -31,7 +31,7 @@ export default function useAnimationLoop(tanks, caught, showGrid, showSingle, ef
       const all=tR.current;const cur=cR.current;const fl=flR.current;const td=todayStr();
       const mode=modeR.current;
       const nt=all.length;
-      const sAdj=mode.showSingle?1:(mode.effectiveZoom<=2?0.88:mode.effectiveZoom<=3?0.72:0.58);
+      const sAdj=mode.showSingle?1:(mode.effectiveZoom<=2?1.1:mode.effectiveZoom<=3?0.9:0.72);
 
       all.forEach(tank=>{
         const te=tE.current[tank.id];if(!te)return;

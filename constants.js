@@ -45,3 +45,30 @@ export const db={
 
 export const GUN_RELAYS=["https://gun-manhattan.herokuapp.com/gun","https://gun-us.herokuapp.com/gun","https://gunjs.herokuapp.com/gun"];
 export const SYNC_CODE_VERSION=2;
+
+// Export task lists as text
+export const exportPlain=(fishes,includeCompleted)=>{
+  const list=includeCompleted?fishes:fishes.filter(f=>!f.completed);
+  return list.map(f=>f.task).join("\n");
+};
+export const exportRich=(fishes,includeCompleted)=>{
+  const td=todayStr();
+  const list=includeCompleted?fishes:fishes.filter(f=>!f.completed);
+  return list.map(f=>{
+    let line=f.task;
+    const imp=f.importance||"normal";
+    if(imp!=="normal")line+=` [${imp}]`;
+    if(f.dueDate){
+      const diff=daysBetween(td,f.dueDate);
+      if(diff<0)line+=` (${-diff}d overdue)`;
+      else if(diff===0)line+=` (due today)`;
+      else if(diff===1)line+=` (tomorrow)`;
+      else line+=` (${diff}d left)`;
+    }
+    if(f.duration)line+=` ~${durLabel(f.duration)}`;
+    const cl=f.checklist||[];
+    if(cl.length>0)line+=` [${cl.filter(c=>c.done).length}/${cl.length} done]`;
+    if(f.completed)line+=` [completed]`;
+    return line;
+  }).join("\n");
+};

@@ -105,6 +105,7 @@ export default function TaskTankApp(){
   const releaseFish=()=>{if(!caught)return;const p=pR.current[caught.fishId];if(p){const a=Math.random()*Math.PI*2;p.dx=Math.cos(a)*0.018;p.dy=0;}setCaught(null);};
   const updateCaughtFish=fn=>{if(!caught)return;setTanks(p=>p.map(t=>t.id===caught.tankId?{...t,fishes:(t.fishes||[]).map(f=>f.id===caught.fishId?fn(f):f)}:t));};
   const toggleComplete=()=>{if(!caught)return;updateCaughtFish(f=>{const nc=!f.completed;const band=DEPTH_BAND[nc?"completed":(f.importance||"normal")];const p=pR.current[f.id];if(p){p.targetY=band.min+Math.random()*(band.max-band.min);}log("fish.status",{fishId:f.id,completed:nc});return{...f,completed:nc};});};
+  const toggleFishComplete=(tid,fid)=>{setTanks(p=>p.map(t=>t.id!==tid?t:{...t,fishes:(t.fishes||[]).map(f=>{if(f.id!==fid)return f;const nc=!f.completed;const band=DEPTH_BAND[nc?"completed":(f.importance||"normal")];const pr=pR.current[f.id];if(pr){pr.targetY=band.min+Math.random()*(band.max-band.min);}log("fish.status",{fishId:f.id,completed:nc});return{...f,completed:nc};})}));};
   const removeFish=()=>{if(!caught)return;const{tankId,fishId}=caught;delete pR.current[fishId];delete fE.current[fishId];delete fB.current[fishId];delete fL.current[fishId];setTanks(p=>p.map(t=>t.id===tankId?{...t,fishes:(t.fishes||[]).filter(f=>f.id!==fishId)}:t));log("fish.remove",{tankId,fishId});setCaught(null);};
   const setFishImportance=k=>{updateCaughtFish(f=>{const band=DEPTH_BAND[f.completed?"completed":k];const p=pR.current[f.id];if(p){p.targetY=band.min+Math.random()*(band.max-band.min);}log("fish.edit",{fishId:f.id,importance:k});return{...f,importance:k};});};
 
@@ -304,7 +305,7 @@ export default function TaskTankApp(){
       <DeleteModal delModal={delModal} setDelModal={setDelModal} tanks={tanks} confirmDelete={confirmDelete}/>
 
       {/* ══ LIST VIEW OVERLAY ══ */}
-      <ListViewOverlay listView={listView} setListView={setListView} actTank={actTank} catchFish={catchFish}/>
+      <ListViewOverlay listView={listView} setListView={setListView} actTank={actTank} catchFish={catchFish} toggleFishComplete={toggleFishComplete}/>
 
       {/* ══ PURGE OVERLAY ══ */}
       <PurgeOverlay nukeId={nukeId} nukeTank={nukeTank} keepers={keepers} toggleK={toggleK}

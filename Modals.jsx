@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { IMP, DUR_PRESETS, durLabel, todayStr, daysBetween, DEVICE_ID, nowISO } from "./constants.js";
+import { IMP, DUR_PRESETS, durLabel, todayStr, daysBetween, DEVICE_ID, nowISO, exportPlain, exportRich } from "./constants.js";
 import { iconBtn, tinyBtn } from "./styles.js";
 
 // ══════════════════════════════════════════════════════════════
@@ -26,35 +26,70 @@ export function DeleteModal({ delModal, setDelModal, tanks, confirmDelete }) {
 // ══════════════════════════════════════════════════════════════
 // LIST VIEW OVERLAY (Trello-style)
 // ══════════════════════════════════════════════════════════════
-export function ListViewOverlay({ listView, setListView, actTank, catchFish }) {
+export function ListViewOverlay({ listView, setListView, actTank, catchFish, toggleFishComplete }) {
+  const [copyMenu,setCopyMenu]=useState(false);
+  const [copyFlash,setCopyFlash]=useState("");
+  const [inclCompleted,setInclCompleted]=useState(false);
   if(!listView||!actTank)return null;
   const td=todayStr();
+  const fishes=actTank.fishes||[];
+  const doCopy=(mode)=>{
+    const text=mode==="plain"?exportPlain(fishes,inclCompleted):exportRich(fishes,inclCompleted);
+    try{navigator.clipboard.writeText(text);}catch{}
+    setCopyFlash(mode==="plain"?"Copied plain!":"Copied with details!");
+    setCopyMenu(false);
+    setTimeout(()=>setCopyFlash(""),1500);
+  };
+  const toggleBtn=(f)=>(<div onClick={e=>{e.stopPropagation();toggleFishComplete(actTank.id,f.id);}}
+    style={{width:22,height:22,borderRadius:"50%",border:`2px solid ${f.completed?"#2ED573":"rgba(255,255,255,.2)"}`,
+      background:f.completed?"#2ED573":"transparent",display:"flex",alignItems:"center",justifyContent:"center",
+      flexShrink:0,cursor:"pointer",transition:"all .15s"}}>
+    {f.completed&&<span style={{color:"#fff",fontSize:12,fontWeight:700,lineHeight:1}}>{"\u2713"}</span>}
+  </div>);
   return(
     <div style={{position:"absolute",inset:0,zIndex:180,background:"rgba(8,12,24,.98)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",animation:"fadeIn .2s ease-out"}}>
       <div style={{padding:"12px 16px",borderBottom:"1px solid rgba(255,255,255,.06)",display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
         <button onClick={()=>setListView(false)} style={iconBtn}>{"\u2715"}</button>
         <div style={{flex:1}}>
           <div style={{fontSize:12,fontWeight:700,letterSpacing:2,color:"#4D96FF"}}>{"\u2630"} LIST VIEW</div>
-          <div style={{fontSize:10,opacity:.4}}>{actTank.name} · {(actTank.fishes||[]).length} tasks</div>
+          <div style={{fontSize:10,opacity:.4}}>{actTank.name} · {fishes.length} tasks</div>
         </div>
-        <div style={{fontSize:9,opacity:.3,display:"flex",gap:8}}>
-          <span>{(actTank.fishes||[]).filter(f=>!f.completed).length} active</span>
-          <span>{(actTank.fishes||[]).filter(f=>f.completed).length} done</span>
+        <div style={{fontSize:9,opacity:.3,display:"flex",gap:8,alignItems:"center"}}>
+          <span>{fishes.filter(f=>!f.completed).length} active</span>
+          <span>{fishes.filter(f=>f.completed).length} done</span>
+          <div style={{position:"relative"}}>
+            {copyFlash?(<span style={{fontSize:9,color:"#2ED573",fontWeight:600}}>{copyFlash}</span>):(
+              <button onClick={()=>setCopyMenu(p=>!p)} style={{...iconBtn,fontSize:11,padding:"3px 6px"}} title="Copy task list">{"\uD83D\uDCCB"}</button>
+            )}
+            {copyMenu&&(<div style={{position:"absolute",top:"100%",right:0,marginTop:4,background:"rgba(12,18,32,.98)",border:"1px solid rgba(77,150,255,.2)",borderRadius:8,padding:8,zIndex:10,minWidth:150,boxShadow:"0 8px 24px rgba(0,0,0,.5)"}}>
+              <button onClick={()=>doCopy("plain")} style={{display:"block",width:"100%",padding:"8px 10px",background:"none",border:"none",borderRadius:4,color:"#d0d8e4",fontSize:10,fontFamily:"inherit",cursor:"pointer",textAlign:"left"}} className="ni">Plain text</button>
+              <button onClick={()=>doCopy("rich")} style={{display:"block",width:"100%",padding:"8px 10px",background:"none",border:"none",borderRadius:4,color:"#d0d8e4",fontSize:10,fontFamily:"inherit",cursor:"pointer",textAlign:"left"}} className="ni">With details</button>
+              <div style={{borderTop:"1px solid rgba(255,255,255,.06)",margin:"4px 0"}}/>
+              <label style={{display:"flex",alignItems:"center",gap:6,padding:"6px 10px",fontSize:9,color:"#8898aa",cursor:"pointer"}}>
+                <input type="checkbox" checked={inclCompleted} onChange={e=>setInclCompleted(e.target.checked)} style={{accentColor:"#4D96FF"}}/>
+                Include completed
+              </label>
+            </div>)}
+          </div>
         </div>
       </div>
+      {copyMenu&&<div onClick={()=>setCopyMenu(false)} style={{position:"fixed",inset:0,zIndex:179}}/>}
       <div style={{flex:1,overflow:"auto",padding:"12px 16px",display:"flex",flexDirection:"column",gap:16}}>
         {/* Critical / Overdue */}
-        {(()=>{const items=(actTank.fishes||[]).filter(f=>!f.completed&&(f.importance==="critical"||(f.dueDate&&daysBetween(todayStr(),f.dueDate)<0)));
+        {(()=>{const items=fishes.filter(f=>!f.completed&&(f.importance==="critical"||(f.dueDate&&daysBetween(todayStr(),f.dueDate)<0)));
           if(!items.length)return null;
           return(<div>
             <div style={{fontSize:10,fontWeight:700,letterSpacing:2,color:"#FF4757",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>{"\uD83D\uDD25"} CRITICAL / OVERDUE <span style={{fontSize:9,opacity:.5,fontWeight:400}}>({items.length})</span></div>
             <div style={{display:"flex",flexDirection:"column",gap:6}}>
-              {items.map(f=>(<div key={f.id} onClick={()=>{catchFish(actTank.id,f.id);setListView(false);}} style={{padding:"12px 14px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:8,cursor:"pointer",transition:"all .15s"}} className="ni">
-                <div style={{fontSize:12,fontWeight:600,color:"#f8e8e8",marginBottom:4}}>{f.task}</div>
-                <div style={{fontSize:9,opacity:.5,display:"flex",gap:8,flexWrap:"wrap"}}>
-                  {f.dueDate&&<span style={{color:daysBetween(todayStr(),f.dueDate)<0?"#FF4757":"#FFD93D"}}>Due: {f.dueDate}</span>}
-                  {f.duration&&<span>{"\u23F1"} {durLabel(f.duration)}</span>}
-                  {(f.checklist||[]).length>0&&<span>{"\u2611"} {(f.checklist||[]).filter(c=>c.done).length}/{(f.checklist||[]).length}</span>}
+              {items.map(f=>(<div key={f.id} onClick={()=>{catchFish(actTank.id,f.id);setListView(false);}} style={{padding:"12px 14px",background:"rgba(255,71,87,.08)",border:"1px solid rgba(255,71,87,.2)",borderRadius:8,cursor:"pointer",transition:"all .15s",display:"flex",alignItems:"center",gap:10}} className="ni">
+                {toggleBtn(f)}
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:12,fontWeight:600,color:"#f8e8e8",marginBottom:4}}>{f.task}</div>
+                  <div style={{fontSize:9,opacity:.5,display:"flex",gap:8,flexWrap:"wrap"}}>
+                    {f.dueDate&&<span style={{color:daysBetween(todayStr(),f.dueDate)<0?"#FF4757":"#FFD93D"}}>Due: {f.dueDate}</span>}
+                    {f.duration&&<span>{"\u23F1"} {durLabel(f.duration)}</span>}
+                    {(f.checklist||[]).length>0&&<span>{"\u2611"} {(f.checklist||[]).filter(c=>c.done).length}/{(f.checklist||[]).length}</span>}
+                  </div>
                 </div>
               </div>))}
             </div>
@@ -62,17 +97,20 @@ export function ListViewOverlay({ listView, setListView, actTank, catchFish }) {
         })()}
 
         {/* Important */}
-        {(()=>{const items=(actTank.fishes||[]).filter(f=>!f.completed&&f.importance==="important"&&!(f.dueDate&&daysBetween(todayStr(),f.dueDate)<0));
+        {(()=>{const items=fishes.filter(f=>!f.completed&&f.importance==="important"&&!(f.dueDate&&daysBetween(todayStr(),f.dueDate)<0));
           if(!items.length)return null;
           return(<div>
             <div style={{fontSize:10,fontWeight:700,letterSpacing:2,color:"#FFD93D",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>{"\u2B50"} IMPORTANT <span style={{fontSize:9,opacity:.5,fontWeight:400}}>({items.length})</span></div>
             <div style={{display:"flex",flexDirection:"column",gap:6}}>
-              {items.map(f=>(<div key={f.id} onClick={()=>{catchFish(actTank.id,f.id);setListView(false);}} style={{padding:"12px 14px",background:"rgba(255,217,61,.06)",border:"1px solid rgba(255,217,61,.15)",borderRadius:8,cursor:"pointer",transition:"all .15s"}} className="ni">
-                <div style={{fontSize:12,fontWeight:600,color:"#f8f4e8",marginBottom:4}}>{f.task}</div>
-                <div style={{fontSize:9,opacity:.5,display:"flex",gap:8,flexWrap:"wrap"}}>
-                  {f.dueDate&&<span>Due: {f.dueDate}</span>}
-                  {f.duration&&<span>{"\u23F1"} {durLabel(f.duration)}</span>}
-                  {(f.checklist||[]).length>0&&<span>{"\u2611"} {(f.checklist||[]).filter(c=>c.done).length}/{(f.checklist||[]).length}</span>}
+              {items.map(f=>(<div key={f.id} onClick={()=>{catchFish(actTank.id,f.id);setListView(false);}} style={{padding:"12px 14px",background:"rgba(255,217,61,.06)",border:"1px solid rgba(255,217,61,.15)",borderRadius:8,cursor:"pointer",transition:"all .15s",display:"flex",alignItems:"center",gap:10}} className="ni">
+                {toggleBtn(f)}
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:12,fontWeight:600,color:"#f8f4e8",marginBottom:4}}>{f.task}</div>
+                  <div style={{fontSize:9,opacity:.5,display:"flex",gap:8,flexWrap:"wrap"}}>
+                    {f.dueDate&&<span>Due: {f.dueDate}</span>}
+                    {f.duration&&<span>{"\u23F1"} {durLabel(f.duration)}</span>}
+                    {(f.checklist||[]).length>0&&<span>{"\u2611"} {(f.checklist||[]).filter(c=>c.done).length}/{(f.checklist||[]).length}</span>}
+                  </div>
                 </div>
               </div>))}
             </div>
@@ -80,17 +118,20 @@ export function ListViewOverlay({ listView, setListView, actTank, catchFish }) {
         })()}
 
         {/* Normal */}
-        {(()=>{const items=(actTank.fishes||[]).filter(f=>!f.completed&&(f.importance||"normal")==="normal"&&f.importance!=="critical"&&f.importance!=="important");
+        {(()=>{const items=fishes.filter(f=>!f.completed&&(f.importance||"normal")==="normal"&&f.importance!=="critical"&&f.importance!=="important");
           if(!items.length)return null;
           return(<div>
             <div style={{fontSize:10,fontWeight:700,letterSpacing:2,color:"#8898aa",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>{"\u25CB"} NORMAL <span style={{fontSize:9,opacity:.5,fontWeight:400}}>({items.length})</span></div>
             <div style={{display:"flex",flexDirection:"column",gap:6}}>
-              {items.map(f=>(<div key={f.id} onClick={()=>{catchFish(actTank.id,f.id);setListView(false);}} style={{padding:"12px 14px",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",borderRadius:8,cursor:"pointer",transition:"all .15s"}} className="ni">
-                <div style={{fontSize:12,fontWeight:500,color:"#d0d8e4",marginBottom:4}}>{f.task}</div>
-                <div style={{fontSize:9,opacity:.5,display:"flex",gap:8,flexWrap:"wrap"}}>
-                  {f.dueDate&&<span>Due: {f.dueDate}</span>}
-                  {f.duration&&<span>{"\u23F1"} {durLabel(f.duration)}</span>}
-                  {(f.checklist||[]).length>0&&<span>{"\u2611"} {(f.checklist||[]).filter(c=>c.done).length}/{(f.checklist||[]).length}</span>}
+              {items.map(f=>(<div key={f.id} onClick={()=>{catchFish(actTank.id,f.id);setListView(false);}} style={{padding:"12px 14px",background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.06)",borderRadius:8,cursor:"pointer",transition:"all .15s",display:"flex",alignItems:"center",gap:10}} className="ni">
+                {toggleBtn(f)}
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:12,fontWeight:500,color:"#d0d8e4",marginBottom:4}}>{f.task}</div>
+                  <div style={{fontSize:9,opacity:.5,display:"flex",gap:8,flexWrap:"wrap"}}>
+                    {f.dueDate&&<span>Due: {f.dueDate}</span>}
+                    {f.duration&&<span>{"\u23F1"} {durLabel(f.duration)}</span>}
+                    {(f.checklist||[]).length>0&&<span>{"\u2611"} {(f.checklist||[]).filter(c=>c.done).length}/{(f.checklist||[]).length}</span>}
+                  </div>
                 </div>
               </div>))}
             </div>
@@ -98,20 +139,23 @@ export function ListViewOverlay({ listView, setListView, actTank, catchFish }) {
         })()}
 
         {/* Completed */}
-        {(()=>{const items=(actTank.fishes||[]).filter(f=>f.completed);
+        {(()=>{const items=fishes.filter(f=>f.completed);
           if(!items.length)return null;
           return(<div>
             <div style={{fontSize:10,fontWeight:700,letterSpacing:2,color:"#2ED573",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>{"\u2713"} COMPLETED <span style={{fontSize:9,opacity:.5,fontWeight:400}}>({items.length})</span></div>
             <div style={{display:"flex",flexDirection:"column",gap:4}}>
-              {items.map(f=>(<div key={f.id} onClick={()=>{catchFish(actTank.id,f.id);setListView(false);}} style={{padding:"10px 14px",background:"rgba(46,213,115,.04)",border:"1px solid rgba(46,213,115,.1)",borderRadius:8,cursor:"pointer",transition:"all .15s",opacity:.6}} className="ni">
-                <div style={{fontSize:11,color:"#8ab894",textDecoration:"line-through"}}>{f.task}</div>
+              {items.map(f=>(<div key={f.id} onClick={()=>{catchFish(actTank.id,f.id);setListView(false);}} style={{padding:"10px 14px",background:"rgba(46,213,115,.04)",border:"1px solid rgba(46,213,115,.1)",borderRadius:8,cursor:"pointer",transition:"all .15s",opacity:.6,display:"flex",alignItems:"center",gap:10}} className="ni">
+                {toggleBtn(f)}
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:11,color:"#8ab894",textDecoration:"line-through"}}>{f.task}</div>
+                </div>
               </div>))}
             </div>
           </div>);
         })()}
 
         {/* Empty state */}
-        {(actTank.fishes||[]).length===0&&(
+        {fishes.length===0&&(
           <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",opacity:.3}}>
             <div style={{fontSize:32,marginBottom:8}}>{"\uD83D\uDC20"}</div>
             <div style={{fontSize:11}}>No tasks in this tank</div>
