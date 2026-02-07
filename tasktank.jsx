@@ -233,22 +233,22 @@ export default function TaskTankApp(){
             const isAct=tank.id===activeId;const si=tank.speedIdx??2;
             return(<div key={tank.id} className="tcard" onClick={()=>setActiveId(tank.id)}
               style={{display:"flex",flexDirection:"column",borderRadius:8,border:`1px solid ${isAct?"rgba(77,150,255,.3)":"rgba(255,255,255,.03)"}`,boxShadow:isAct?"0 0 14px rgba(77,150,255,.06)":"none",overflow:"hidden",minHeight:0,background:"rgba(6,10,20,.6)"}}>
-              <div style={{display:"flex",alignItems:"center",gap:3,padding:"3px 6px",flexShrink:0,background:isAct?"rgba(77,150,255,.06)":"rgba(255,255,255,.012)",borderBottom:"1px solid rgba(255,255,255,.025)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:5,padding:"5px 8px",flexShrink:0,background:isAct?"rgba(77,150,255,.06)":"rgba(255,255,255,.012)",borderBottom:"1px solid rgba(255,255,255,.025)"}}>
                 <button onClick={e=>{e.stopPropagation();moveTank(tank.id,-1);}} style={{...gridCardBtn,opacity:i===0?.15:.5}}>{"\u25C0"}</button>
                 <button onClick={e=>{e.stopPropagation();moveTank(tank.id,1);}} style={{...gridCardBtn,opacity:i===tanks.length-1?.15:.5}}>{"\u25B6"}</button>
                 {etId===tank.id?(<input autoFocus value={etName} onChange={e=>setEtName(e.target.value)}
                   onBlur={saveTankName} onKeyDown={e=>{if(e.key==="Enter")e.target.blur();if(e.key==="Escape")setEtId(null);}}
                   onClick={e=>e.stopPropagation()}
-                  style={{flex:1,padding:"0 3px",background:"rgba(0,0,0,.3)",border:"1px solid rgba(77,150,255,.3)",borderRadius:3,color:"#d0d8e4",fontSize:9,fontFamily:"inherit",minWidth:0}}/>
+                  style={{flex:1,padding:"2px 5px",background:"rgba(0,0,0,.3)",border:"1px solid rgba(77,150,255,.3)",borderRadius:4,color:"#d0d8e4",fontSize:12,fontFamily:"inherit",minWidth:0}}/>
                 ):(<span onClick={e=>{e.stopPropagation();setEtId(tank.id);setEtName(tank.name);}}
-                  style={{flex:1,fontSize:9,fontWeight:600,letterSpacing:1.2,color:isAct?"#7bb8ff":"#7888a0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"text",borderBottom:isAct?"1px dashed rgba(123,184,255,.15)":"1px dashed transparent"}}>{tank.name.toUpperCase()} <span style={{fontSize:7,opacity:.2}}>{"\u270F"}</span></span>)}
-                <span style={{fontSize:8,opacity:.25,flexShrink:0}}>{(tank.fishes||[]).length}{"\uD83D\uDC20"}</span>
-                {(tank.peers||[]).length>0&&<span style={{fontSize:7,opacity:.35,flexShrink:0,color:"#2ED573"}}>{(tank.peers||[]).length}{"\uD83D\uDD17"}</span>}
-                <button onClick={e=>{e.stopPropagation();cycleSpeed(tank.id);}} title={SPD[si].label} style={{...gridCardBtn,fontSize:11,minWidth:22}}>{SPD[si].icon}</button>
-                <button onClick={e=>{e.stopPropagation();setActiveId(tank.id);setListView(true);}} style={{...gridCardBtn,fontSize:9}} title="List view">{"\u2630"}</button>
-                <button onClick={e=>{e.stopPropagation();setShareModal(tank.id);}} style={{...gridCardBtn,fontSize:9}} title="Share">{"\uD83D\uDD17"}</button>
-                <button onClick={e=>{e.stopPropagation();setActiveId(tank.id);setViewZoom(1);}} style={{...gridCardBtn,fontSize:9}}>{"\u26F6"}</button>
-                <button onClick={e=>{e.stopPropagation();setDelModal({tankId:tank.id,input:""});}} style={{...gridCardBtn,color:"#556",fontSize:8}}>{"\u00D7"}</button>
+                  style={{flex:1,fontSize:12,fontWeight:600,letterSpacing:1.2,color:isAct?"#7bb8ff":"#7888a0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"text",borderBottom:isAct?"1px dashed rgba(123,184,255,.15)":"1px dashed transparent"}}>{tank.name.toUpperCase()} <span style={{fontSize:9,opacity:.2}}>{"\u270F"}</span></span>)}
+                <span style={{fontSize:10,opacity:.25,flexShrink:0}}>{(tank.fishes||[]).length}{"\uD83D\uDC20"}</span>
+                {(tank.peers||[]).length>0&&<span style={{fontSize:9,opacity:.35,flexShrink:0,color:"#2ED573"}}>{(tank.peers||[]).length}{"\uD83D\uDD17"}</span>}
+                <button onClick={e=>{e.stopPropagation();cycleSpeed(tank.id);}} title={SPD[si].label} style={{...gridCardBtn,fontSize:13,minWidth:26}}>{SPD[si].icon}</button>
+                <button onClick={e=>{e.stopPropagation();setActiveId(tank.id);setListView(true);}} style={{...gridCardBtn,fontSize:12}} title="List view">{"\u2630"}</button>
+                <button onClick={e=>{e.stopPropagation();setShareModal(tank.id);}} style={{...gridCardBtn,fontSize:12}} title="Share">{"\uD83D\uDD17"}</button>
+                <button onClick={e=>{e.stopPropagation();setActiveId(tank.id);setViewZoom(1);}} style={{...gridCardBtn,fontSize:12}}>{"\u26F6"}</button>
+                <button onClick={e=>{e.stopPropagation();setDelModal({tankId:tank.id,input:""});}} style={{...gridCardBtn,color:"#556",fontSize:11}}>{"\u00D7"}</button>
               </div>
               <TankRenderer tank={tank} caught={caught} showSingle={showSingle} effectiveZoom={effectiveZoom}
                 flushTid={flushTid} catchFish={catchFish} pR={pR} fE={fE} fB={fB} fL={fL} tE={tE}
@@ -257,8 +257,8 @@ export default function TaskTankApp(){
           })}
           {tanks.length<MAX_TANKS&&(
             <div className="addc" onClick={addTank} style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",border:"1.5px dashed rgba(255,255,255,.05)",borderRadius:8,cursor:"pointer",background:"rgba(255,255,255,.006)",minHeight:0}}>
-              <div style={{fontSize:24,opacity:.13,marginBottom:3,lineHeight:1}}>+</div>
-              <div style={{fontSize:8,opacity:.08,letterSpacing:2}}>NEW TANK</div>
+              <div style={{fontSize:32,opacity:.13,marginBottom:3,lineHeight:1}}>+</div>
+              <div style={{fontSize:11,opacity:.08,letterSpacing:2}}>NEW TANK</div>
             </div>)}
         </div>
       ):(

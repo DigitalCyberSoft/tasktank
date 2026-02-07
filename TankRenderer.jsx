@@ -32,14 +32,14 @@ export default function TankRenderer({ tank, caught, showSingle, effectiveZoom, 
             letterSpacing:.3,background:"rgba(0,0,0,.4)",padding:"2px 6px",borderRadius:4,transformOrigin:"center top",
             textDecoration:fc?"line-through":"none"}}>
             {fish.task.length>truncLen?fish.task.slice(0,truncLen-2)+"\u2026":fish.task}
-            {fish.duration&&<span style={{display:"block",fontSize:showSingle?7:6,opacity:.55,marginTop:1,color:"#7bb8ff",letterSpacing:.5}}>{"\u23F1"}{durLabel(fish.duration)}</span>}
+            {fish.duration&&<span style={{display:"block",fontSize:showSingle?7:8,opacity:.55,marginTop:1,color:"#7bb8ff",letterSpacing:.5}}>{"\u23F1"}{durLabel(fish.duration)}</span>}
           </div></div>);
       })}
 
       {(tank.fishes||[]).length===0&&(
         <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}>
-          <div style={{fontSize:showSingle?36:22,opacity:.12,marginBottom:4}}>{"\uD83D\uDC20"}</div>
-          <div style={{fontSize:showSingle?9:7,opacity:.1,letterSpacing:2,fontWeight:600}}>EMPTY</div></div>)}
+          <div style={{fontSize:showSingle?36:28,opacity:.12,marginBottom:4}}>{"\uD83D\uDC20"}</div>
+          <div style={{fontSize:showSingle?9:10,opacity:.1,letterSpacing:2,fontWeight:600}}>EMPTY</div></div>)}
 
       {flushTid===tank.id&&(
         <div style={{position:"absolute",bottom:"2%",left:"50%",transform:"translateX(-50%)",width:44,height:44,pointerEvents:"none",zIndex:160}}>

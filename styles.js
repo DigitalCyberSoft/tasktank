@@ -3,4 +3,4 @@ export const tinyBtn={padding:"2px 4px",background:"transparent",border:"none",c
 export const inputStyle={flex:1,padding:"6px 8px",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",borderRadius:6,color:"#d0d8e4",fontSize:11,fontFamily:"inherit",minWidth:0,boxSizing:"border-box"};
 export const smBtnAlt={padding:"6px 12px",background:"rgba(77,150,255,.12)",border:"none",borderRadius:6,color:"#7bb8ff",fontSize:10,cursor:"pointer",fontFamily:"inherit",fontWeight:600,flexShrink:0};
 export const addItemBtn={width:"100%",padding:"7px 0",background:"transparent",border:"1px dashed rgba(255,255,255,.06)",borderRadius:6,color:"#556",fontSize:9,cursor:"pointer",fontFamily:"inherit",marginTop:6,letterSpacing:1};
-export const gridCardBtn={padding:"1px 4px",background:"transparent",border:"1px solid transparent",borderRadius:3,color:"#6678",fontSize:8,cursor:"pointer",fontFamily:"inherit",lineHeight:1,flexShrink:0};
+export const gridCardBtn={padding:"3px 6px",background:"transparent",border:"1px solid transparent",borderRadius:4,color:"#6678",fontSize:11,cursor:"pointer",fontFamily:"inherit",lineHeight:1,flexShrink:0};
