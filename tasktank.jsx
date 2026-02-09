@@ -1,6 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { MAX_TANKS, COLORS, SPD, IMP, DEPTH_BAND, DUR_PRESETS, DEVICE_ID, pick, uid, clamp, todayStr, daysBetween, getGrid, getZoomGrid, durLabel, nowISO, db, GUN_RELAYS, SYNC_CODE_VERSION } from "./constants.js";
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
+import { MAX_TANKS, COLORS, SPD, IMP, DEPTH_BAND, DUR_PRESETS, DEVICE_ID, pick, uid, clamp, todayStr, daysBetween, getGrid, getZoomGrid, durLabel, nowISO, db, NOSTR_RELAYS, SYNC_CODE_VERSION, MAX_SYNC_DEVICES, MAX_FILE_SIZE } from "./constants.js";
+import { storeFile, computeChecksum, deleteFilesForFish, deleteFilesForTank } from "./fileStore.js";
 import useSync from "./useSync.js";
+import useDeviceGroup from "./useDeviceGroup.js";
+import useBroadcastSync from "./useBroadcastSync.js";
 import { iconBtn, gridCardBtn } from "./styles.js";
 import useAnimationLoop from "./useAnimationLoop.js";
 import TankRenderer from "./TankRenderer.jsx";
@@ -8,7 +11,9 @@ import CaughtPanel from "./CaughtPanel.jsx";
 import TopBar from "./TopBar.jsx";
 import TankDrawer from "./TankDrawer.jsx";
 import { DesktopInputBar, MobileInputBar } from "./InputBar.jsx";
-import { DeleteModal, NewTankModal, ListViewOverlay, PurgeOverlay, ShareModal, JoinModal, BulkAddModal } from "./Modals.jsx";
+import { DeleteModal, NewTankModal, ListViewOverlay, PurgeOverlay, ShareModal, JoinModal, BulkAddModal, DevicePairModal } from "./Modals.jsx";
+
+const DevPanel = import.meta.env.DEV ? lazy(() => import("./DevPanel.jsx")) : null;
 
 // ══════════════════════════════════════════════════════════════
 // MAIN
@@ -43,15 +48,21 @@ export default function TaskTankApp(){
   const [uiZoom,setUiZoom]=useState(1);
   const [theme,setTheme]=useState("auto");
   const [settingsOpen,setSettingsOpen]=useState(false);
+  const [devicePairModal,setDevicePairModal]=useState(false);
+  const [devPanelOpen,setDevPanelOpen]=useState(false);
+
+  // Ctrl+Shift+D toggles dev panel
+  useEffect(()=>{if(!import.meta.env.DEV)return;const h=e=>{if(e.ctrlKey&&e.shiftKey&&e.key==="D"){e.preventDefault();setDevPanelOpen(v=>!v);}};window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h);},[]);
 
   // System theme detection
   const [sysTheme,setSysTheme]=useState(()=>typeof window!=="undefined"&&window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark");
   useEffect(()=>{const mq=window.matchMedia("(prefers-color-scheme:light)");const h=e=>setSysTheme(e.matches?"light":"dark");mq.addEventListener("change",h);return()=>mq.removeEventListener("change",h);},[]);
   const resolvedTheme=theme==="auto"?sysTheme:theme;
 
-  // Apply zoom + theme to document
-  useEffect(()=>{document.documentElement.style.zoom=uiZoom;},[uiZoom]);
-  useEffect(()=>{document.documentElement.dataset.theme=resolvedTheme;const mc=document.querySelector('meta[name="theme-color"]');if(mc)mc.content=resolvedTheme==="light"?"#eef1f6":"#040810";document.body.style.background=resolvedTheme==="light"?"#eef1f6":"#040810";},[resolvedTheme]);
+  // Apply theme to document
+  useEffect(()=>{document.documentElement.dataset.theme=resolvedTheme;const mc=document.querySelector('meta[name="theme-color"]');if(mc)mc.content=resolvedTheme==="light"?"#eef1f6":"#040810";document.body.style.background=resolvedTheme==="light"?"#eef1f6":"#040810";
+    // Clean up old zoom on documentElement if present
+    document.documentElement.style.zoom="";},[resolvedTheme]);
 
   const isMobile=winW<768;
   const effectiveZoom=viewZoom===0?(isMobile?1:(zoomed?1:0)):viewZoom;
@@ -70,7 +81,9 @@ export default function TaskTankApp(){
   const { pR, fE, fB, fL, tE, surfT, flR, initP } = useAnimationLoop(tanks, caught, showGrid, showSingle, effectiveZoom);
 
   // P2P sync hook
-  const { syncStatus, syncedTanks, shareTank, joinTank, unsyncTank, updatePeerGun } = useSync(tanks, setTanks, initP);
+  const { syncStatus, syncedTanks, peerConnectionStatus, fileTransferStatus, shareTank, joinTank, unsyncTank, updatePeerGun, getSyncKeys, requestFileFromPeer } = useSync(tanks, setTanks, initP);
+  const { deviceGroup, pairDevice, acceptDevicePair, unpairDevice } = useDeviceGroup(tanks, setTanks, initP, shareTank, joinTank, unsyncTank, getSyncKeys);
+  useBroadcastSync(tanks, setTanks, initP);
 
   const initialPairCode=useRef(null);
   const tchR=useRef({sx:0,sy:0,swiping:false,swiped:false,dx:0});const swipeEl=useRef(null);
@@ -101,11 +114,15 @@ export default function TaskTankApp(){
   const onTS=useCallback(e=>{if(e.touches.length!==1)return;const t=e.touches[0];tchR.current={sx:t.clientX,sy:t.clientY,swiping:false,swiped:false,dx:0};if(swipeEl.current)swipeEl.current.style.transition="none";},[]);
   const onTM=useCallback(e=>{if(e.touches.length!==1)return;const dx=e.touches[0].clientX-tchR.current.sx;const dy=e.touches[0].clientY-tchR.current.sy;if(!tchR.current.swiping){if(Math.abs(dx)>16&&Math.abs(dx)>Math.abs(dy)*1.5)tchR.current.swiping=true;else return;}tchR.current.dx=dx;if(swipeEl.current)swipeEl.current.style.transform=`translateX(${clamp(dx*.3,-100,100)}px)`;},[]);
   const onTE=useCallback(()=>{if(swipeEl.current){swipeEl.current.style.transition="transform .2s ease";swipeEl.current.style.transform="";}if(tchR.current.swiping){tchR.current.swiped=true;const{dx}=tchR.current;if(dx<-50)navTank(1);else if(dx>50)navTank(-1);setTimeout(()=>{tchR.current.swiped=false;},80);}},[navTank]);
+  const onMD=useCallback(e=>{if(e.button!==0)return;tchR.current={sx:e.clientX,sy:e.clientY,swiping:false,swiped:false,dx:0};if(swipeEl.current)swipeEl.current.style.transition="none";
+    const mm=ev=>{const dx=ev.clientX-tchR.current.sx;const dy=ev.clientY-tchR.current.sy;if(!tchR.current.swiping){if(Math.abs(dx)>16&&Math.abs(dx)>Math.abs(dy)*1.5)tchR.current.swiping=true;else return;}tchR.current.dx=dx;if(swipeEl.current)swipeEl.current.style.transform=`translateX(${clamp(dx*.3,-100,100)}px)`;};
+    const mu=()=>{window.removeEventListener("mousemove",mm);window.removeEventListener("mouseup",mu);if(swipeEl.current){swipeEl.current.style.transition="transform .2s ease";swipeEl.current.style.transform="";}if(tchR.current.swiping){tchR.current.swiped=true;const{dx}=tchR.current;if(dx<-50)navTank(1);else if(dx>50)navTank(-1);setTimeout(()=>{tchR.current.swiped=false;},80);}};
+    window.addEventListener("mousemove",mm);window.addEventListener("mouseup",mu);},[navTank]);
 
   // TANK CRUD
   const openNewTank=()=>{if(tanks.length>=MAX_TANKS)return;setNewTankModal(true);};
   const addTank=(name)=>{if(tanks.length>=MAX_TANKS)return;const id=uid();surfT.current[id]=200+Math.random()*280;const t={id,name,fishes:[],speedIdx:2,ownerId:DEVICE_ID,peers:[]};setTanks(p=>[...p,t]);setActiveId(id);log("tank.add",{tankId:id,name:t.name});};
-  const confirmDelete=()=>{if(!delModal)return;const tid=delModal.tankId;const tank=tanks.find(t=>t.id===tid);if(tank)(tank.fishes||[]).forEach(f=>{delete pR.current[f.id];delete fE.current[f.id];delete fB.current[f.id];delete fL.current[f.id];});delete tE.current[tid];delete surfT.current[tid];if(caught?.tankId===tid)setCaught(null);if(nukeId===tid){setNukeId(null);setKeepers(new Set());}setTanks(p=>{const nx=p.filter(t=>t.id!==tid);if(activeId===tid)setActiveId(nx[0]?.id||null);return nx;});log("tank.delete",{tankId:tid});setDelModal(null);if(tanks.length<=2&&viewZoom>1)setViewZoom(0);};
+  const confirmDelete=()=>{if(!delModal)return;const tid=delModal.tankId;const tank=tanks.find(t=>t.id===tid);if(tank)(tank.fishes||[]).forEach(f=>{delete pR.current[f.id];delete fE.current[f.id];delete fB.current[f.id];delete fL.current[f.id];});delete tE.current[tid];delete surfT.current[tid];if(caught?.tankId===tid)setCaught(null);if(nukeId===tid){setNukeId(null);setKeepers(new Set());}deleteFilesForTank(tid).catch(()=>{});setTanks(p=>{const nx=p.filter(t=>t.id!==tid);if(activeId===tid)setActiveId(nx[0]?.id||null);return nx;});log("tank.delete",{tankId:tid});setDelModal(null);if(tanks.length<=2&&viewZoom>1)setViewZoom(0);};
   const moveTank=(tid,dir)=>{setTanks(p=>{const i=p.findIndex(t=>t.id===tid);const ni=clamp(i+dir,0,p.length-1);if(i===ni)return p;const a=[...p];[a[i],a[ni]]=[a[ni],a[i]];log("tank.reorder",{tankId:tid,from:i,to:ni});return a;});};
   const renameTank=(tid,name)=>{if(!name.trim())return;setTanks(p=>p.map(t=>t.id===tid?{...t,name:name.trim()}:t));log("tank.rename",{tankId:tid,name:name.trim()});};
   const saveTankName=()=>{if(etName.trim()&&etId)renameTank(etId,etName);setEtId(null);};
@@ -125,7 +142,7 @@ export default function TaskTankApp(){
   const updateCaughtFish=fn=>{if(!caught)return;setTanks(p=>p.map(t=>t.id===caught.tankId?{...t,fishes:(t.fishes||[]).map(f=>f.id===caught.fishId?fn(f):f)}:t));};
   const toggleComplete=()=>{if(!caught)return;updateCaughtFish(f=>{const nc=!f.completed;const band=DEPTH_BAND[nc?"completed":(f.importance||"normal")];const p=pR.current[f.id];if(p){p.targetY=band.min+Math.random()*(band.max-band.min);}log("fish.status",{fishId:f.id,completed:nc});return{...f,completed:nc};});};
   const toggleFishComplete=(tid,fid)=>{setTanks(p=>p.map(t=>t.id!==tid?t:{...t,fishes:(t.fishes||[]).map(f=>{if(f.id!==fid)return f;const nc=!f.completed;const band=DEPTH_BAND[nc?"completed":(f.importance||"normal")];const pr=pR.current[f.id];if(pr){pr.targetY=band.min+Math.random()*(band.max-band.min);}log("fish.status",{fishId:f.id,completed:nc});return{...f,completed:nc};})}));};
-  const removeFish=()=>{if(!caught)return;const{tankId,fishId}=caught;delete pR.current[fishId];delete fE.current[fishId];delete fB.current[fishId];delete fL.current[fishId];setTanks(p=>p.map(t=>t.id===tankId?{...t,fishes:(t.fishes||[]).filter(f=>f.id!==fishId)}:t));log("fish.remove",{tankId,fishId});setCaught(null);};
+  const removeFish=()=>{if(!caught)return;const{tankId,fishId}=caught;delete pR.current[fishId];delete fE.current[fishId];delete fB.current[fishId];delete fL.current[fishId];deleteFilesForFish(fishId).catch(()=>{});setTanks(p=>p.map(t=>t.id===tankId?{...t,fishes:(t.fishes||[]).filter(f=>f.id!==fishId)}:t));log("fish.remove",{tankId,fishId});setCaught(null);};
   const setFishImportance=k=>{updateCaughtFish(f=>{const band=DEPTH_BAND[f.completed?"completed":k];const p=pR.current[f.id];if(p){p.targetY=band.min+Math.random()*(band.max-band.min);}log("fish.edit",{fishId:f.id,importance:k});return{...f,importance:k};});};
 
   // PURGE
@@ -147,25 +164,49 @@ export default function TaskTankApp(){
   };
 
   // ── SHARING & SYNC ──
-  const generateShareCode=async(tankId,perm,recipientName)=>{
+  const generateShareCode=async(tankId,perm,recipientName,directConn=true)=>{
     const tank=tanks.find(t=>t.id===tankId);if(!tank)return"";
     const creds=await shareTank(tankId);
-    const payload={type:"tasktank-pair",v:SYNC_CODE_VERSION,deviceId:DEVICE_ID,
-      deviceName:(typeof navigator!=="undefined"?navigator.userAgent.slice(0,30):"Device"),
-      tankId,tankName:tank.name,fishCount:(tank.fishes||[]).length,
-      permission:perm,syncId:creds.syncId,encKey:creds.encKey,
-      relays:GUN_RELAYS,
-      ts:nowISO(),expires:new Date(Date.now()+300000).toISOString()};
-    if(recipientName&&recipientName.trim())payload.recipientName=recipientName.trim();
-    try{return btoa(JSON.stringify(payload));}catch{return"";}
+    const payload={d:DEVICE_ID,t:tankId,n:tank.name,
+      p:perm==="readonly"?"r":"s",s:creds.syncId,k:creds.encKey,
+      x:Math.floor((Date.now()+300000)/1000),
+      y:creds.relays||undefined};
+    if(recipientName&&recipientName.trim())payload.r=recipientName.trim();
+    if(!directConn)payload.w=0;
+    try{return btoa(JSON.stringify(payload)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}catch{return"";}
   };
   const parseShareCode=(code)=>{
-    try{const d=JSON.parse(atob(code.trim()));
-      if(d.type!=="tasktank-pair"||!d.deviceId||!d.tankId)return{error:"Invalid pairing code"};
-      if(d.deviceId===DEVICE_ID)return{error:"Can't pair with yourself"};
-      if(d.expires&&new Date(d.expires)<new Date())return{error:"Pairing code expired"};
-      if(d.v>=2&&(!d.syncId||!d.encKey))return{error:"Missing sync credentials"};
-      return{data:d};}catch{return{error:"Invalid code format"};}
+    try{const raw=code.trim().replace(/-/g,'+').replace(/_/g,'/');
+      const d=JSON.parse(atob(raw));
+      // Device-pair code
+      if(d._dg){
+        if(!d.g||!d.k)return{error:"Invalid device pair code"};
+        if(d.d===DEVICE_ID)return{error:"Can't pair with yourself"};
+        if(d.x&&d.x*1000<Date.now())return{error:"Pairing code expired"};
+        return{data:{groupId:d.g,groupKey:d.k,relays:(d.y&&Array.isArray(d.y)&&d.y.length)?d.y:NOSTR_RELAYS,deviceId:d.d,deviceName:d.n||d.d?.slice(0,12)||"Unknown"},isDevicePair:true};
+      }
+      // Old format (has "type" field)
+      if(d.type==="tasktank-pair"){
+        if(!d.deviceId||!d.tankId)return{error:"Invalid pairing code"};
+        if(d.deviceId===DEVICE_ID)return{error:"Can't pair with yourself"};
+        if(d.expires&&new Date(d.expires)<new Date())return{error:"Pairing code expired"};
+        if(d.v>=2&&(!d.syncId||!d.encKey))return{error:"Missing sync credentials"};
+        return{data:d};
+      }
+      // New compact format (has "d" field = deviceId)
+      if(!d.d||!d.t)return{error:"Invalid pairing code"};
+      if(d.d===DEVICE_ID)return{error:"Can't pair with yourself"};
+      if(d.x&&d.x*1000<Date.now())return{error:"Pairing code expired"};
+      if(!d.s||!d.k)return{error:"Missing sync credentials"};
+      // Normalize to old shape for acceptPair compatibility
+      return{data:{type:"tasktank-pair",v:SYNC_CODE_VERSION,deviceId:d.d,
+        deviceName:d.d.slice(0,12),tankId:d.t,tankName:d.n||"Shared Tank",
+        fishCount:0,permission:d.p==="r"?"readonly":"shared",
+        syncId:d.s,encKey:d.k,
+        relays:(d.y&&Array.isArray(d.y)&&d.y.length)?d.y:NOSTR_RELAYS,
+        expires:d.x?new Date(d.x*1000).toISOString():null,
+        recipientName:d.r||"",
+        relayOnly:d.w===0}};}catch{return{error:"Invalid code format"};}
   };
   const acceptPair=(pairData)=>{
     const existing=tanks.find(t=>t.id===pairData.tankId);
@@ -181,7 +222,7 @@ export default function TaskTankApp(){
     }
     // Start P2P sync for v2 codes
     if(pairData.syncId&&pairData.encKey){
-      joinTank({tankId:pairData.tankId,syncId:pairData.syncId,encKey:pairData.encKey,permission:pairData.permission,recipientName:pairData.recipientName});
+      joinTank({tankId:pairData.tankId,syncId:pairData.syncId,encKey:pairData.encKey,permission:pairData.permission,recipientName:pairData.recipientName,relays:pairData.relays,relayOnly:pairData.relayOnly});
     }
     log("sync.pair",{tankId:pairData.tankId,remoteDeviceId:pairData.deviceId,permission:pairData.permission});
     setJoinModal(false);
@@ -194,6 +235,7 @@ export default function TaskTankApp(){
   // LEAVE TANK (for non-owners)
   const leaveTank=(tankId)=>{
     unsyncTank(tankId);
+    deleteFilesForTank(tankId).catch(()=>{});
     // Clean up animation refs
     const tank=tanks.find(t=>t.id===tankId);
     if(tank)(tank.fishes||[]).forEach(f=>{delete pR.current[f.id];delete fE.current[f.id];delete fB.current[f.id];delete fL.current[f.id];});
@@ -228,6 +270,19 @@ export default function TaskTankApp(){
   const grid=effectiveZoom>=2?getZoomGrid(effectiveZoom,cardN):getGrid(cardN);
   const truncLen=showSingle?22:(effectiveZoom>=4?14:16);
 
+  // File attachment action
+  const addFileAttachment=useCallback(async(file)=>{
+    if(!caught)return;
+    if(file.size>MAX_FILE_SIZE){return;}
+    const fileId=uid()+"-"+uid();
+    const checksum=await computeChecksum(file);
+    await storeFile(fileId,file.name,file.type,file.size,checksum,file,caught.tankId,caught.fishId);
+    updateCaughtFish(f=>{
+      log("fish.attach.add",{fishId:f.id,name:file.name,fileId});
+      return{...f,attachments:[...(f.attachments||[]),{id:uid(),name:file.name,url:null,fileId,size:file.size,mimeType:file.type,checksum,hasLocalBlob:true}]};
+    });
+  },[caught,updateCaughtFish,log]);
+
   // Fish actions bundle for CaughtPanel
   const fishActions={toggleComplete,updateCaughtFish,setFishImportance,releaseFish,removeFish,log};
 
@@ -235,10 +290,10 @@ export default function TaskTankApp(){
   // RENDER
   // ══════════════════════════════════════════════════════════════
   return(
-    <div style={{width:"100vw",height:"100vh",background:"var(--bg,#040810)",display:"flex",flexDirection:"column",overflow:"hidden",fontFamily:"'SF Mono','Fira Code','Cascadia Code','Consolas',monospace",color:"var(--tx,#d0d8e4)",userSelect:"none",position:"relative"}}>
+    <div style={{width:uiZoom!==1?`${100/uiZoom}vw`:"100vw",height:uiZoom!==1?`${100/uiZoom}vh`:"100vh",zoom:uiZoom,background:"var(--bg,#040810)",display:"flex",flexDirection:"column",overflow:"hidden",fontFamily:"'SF Mono','Fira Code','Cascadia Code','Consolas',monospace",color:"var(--tx,#d0d8e4)",userSelect:"none",position:"relative"}}>
       <style>{`
-        [data-theme="dark"]{--bg:#040810;--bar:rgba(5,9,18,.96);--surf:rgba(8,12,24,.97);--card:rgba(6,10,20,.6);--modal:rgba(8,14,28,.98);--inp:rgba(255,255,255,.035);--inp-brd:rgba(255,255,255,.06);--tx:#d0d8e4;--tx2:#8898aa;--tx3:#556;--brd:rgba(255,255,255,.06);--brd2:rgba(255,255,255,.03);--brd3:rgba(255,255,255,.15);--ovl:rgba(0,0,0,.5);--hvr:rgba(255,255,255,.04);color-scheme:dark}
-        [data-theme="light"]{--bg:#eef1f6;--bar:rgba(235,238,244,.96);--surf:rgba(255,255,255,.97);--card:rgba(255,255,255,.7);--modal:rgba(248,250,254,.98);--inp:rgba(0,0,0,.04);--inp-brd:rgba(0,0,0,.08);--tx:#1a1e2c;--tx2:#5a6578;--tx3:#889;--brd:rgba(0,0,0,.08);--brd2:rgba(0,0,0,.04);--brd3:rgba(0,0,0,.15);--ovl:rgba(0,0,0,.4);--hvr:rgba(0,0,0,.04);color-scheme:light}
+        [data-theme="dark"]{--bg:#040810;--bar:rgba(5,9,18,.96);--surf:rgba(8,12,24,.97);--card:rgba(6,10,20,.6);--modal:rgba(8,14,28,.98);--inp:rgba(255,255,255,.035);--inp-brd:rgba(255,255,255,.06);--tx:#d0d8e4;--tx2:#8898aa;--tx3:#556;--brd:rgba(255,255,255,.06);--brd2:rgba(255,255,255,.03);--brd3:rgba(255,255,255,.15);--ovl:rgba(0,0,0,.5);--hvr:rgba(255,255,255,.04);--w1:#081422;--w2:#0a1c30;--w3:#0d2438;--ws1:#0a1118;--ws2:#101a24;--ws3:#132028;--wsurf:rgba(70,160,255,.03);--wbot:rgba(2,4,8,.55);--wsea1:#1a4a3a;--wsea2:#1d6a4a22;--fish-text:rgba(255,255,255,.6);color-scheme:dark}
+        [data-theme="light"]{--bg:#eef1f6;--bar:rgba(235,238,244,.96);--surf:rgba(255,255,255,.97);--card:rgba(255,255,255,.7);--modal:rgba(248,250,254,.98);--inp:rgba(0,0,0,.04);--inp-brd:rgba(0,0,0,.08);--tx:#1a1e2c;--tx2:#5a6578;--tx3:#889;--brd:rgba(0,0,0,.08);--brd2:rgba(0,0,0,.04);--brd3:rgba(0,0,0,.15);--ovl:rgba(0,0,0,.4);--hvr:rgba(0,0,0,.04);--w1:#1a8aaa;--w2:#1580a0;--w3:#107090;--ws1:#157a96;--ws2:#106a86;--ws3:#0c5a76;--wsurf:rgba(70,160,255,.06);--wbot:rgba(2,4,8,.2);--wsea1:#1a8a5a;--wsea2:#2aaa6a44;--fish-text:rgba(0,0,0,.7);color-scheme:light}
         @keyframes sway{0%,100%{transform:skewX(-5deg)}50%{transform:skewX(5deg)}}
         @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
         @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -267,7 +322,7 @@ export default function TaskTankApp(){
         setHeaderEdit={setHeaderEdit} saveHeaderName={saveHeaderName} effectiveZoom={effectiveZoom}
         cycleZoom={cycleZoom} tanks={tanks} setListView={setListView} setShareModal={setShareModal}
         cycleSpeed={cycleSpeed} openPurge={openPurge} isReadonly={isReadonly}
-        setSettingsOpen={setSettingsOpen}/>
+        setSettingsOpen={setSettingsOpen} peerConnStatus={peerConnectionStatus}/>
 
       {/* ══ BODY ══ */}
       {tanks.length===0&&!showGrid?(
@@ -279,7 +334,7 @@ export default function TaskTankApp(){
         </div>
       ):showGrid?(
         /* ── DESKTOP GRID ── */
-        <div style={{flex:1,display:"grid",gridTemplateColumns:`repeat(${grid.c},1fr)`,gridTemplateRows:`repeat(${grid.r},1fr)`,gap:5,padding:5,overflow:"hidden",minHeight:0}}>
+        <div style={{flex:1,display:"grid",gridTemplateColumns:`repeat(${grid.c},1fr)`,gridTemplateRows:`repeat(${grid.r},1fr)`,gap:5,padding:5,overflow:"hidden",minHeight:0,position:"relative",zIndex:1}}>
           {tanks.map((tank,i)=>{
             const isAct=tank.id===activeId;const si=tank.speedIdx??2;
             const cardRO=!!(tank.ownerId&&tank.ownerId!==DEVICE_ID&&(tank.myPermission||"shared")==="readonly");
@@ -315,7 +370,7 @@ export default function TaskTankApp(){
         </div>
       ):(
         /* ── MOBILE SINGLE VIEW ── */
-        actTank?(<div ref={swipeEl} onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE} style={{flex:1,display:"flex",flexDirection:"column",minHeight:0}}>
+        actTank?(<div ref={swipeEl} onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE} onMouseDown={onMD} style={{flex:1,display:"flex",flexDirection:"column",minHeight:0,position:"relative",zIndex:1}}>
           <TankRenderer tank={actTank} caught={caught} showSingle={showSingle} effectiveZoom={effectiveZoom}
             flushTid={flushTid} catchFish={catchFish} pR={pR} fE={fE} fB={fB} fL={fL} tE={tE}
             dueLabel={dueLabel} truncLen={truncLen}/>
@@ -377,10 +432,26 @@ export default function TaskTankApp(){
             ))}
           </div>
           <div style={{fontSize:7,opacity:.25,marginTop:10,lineHeight:1.5}}>Auto uses your system preference. Scale adjusts all UI elements.</div>
+          <div style={{borderTop:"1px solid var(--brd,rgba(255,255,255,.06))",marginTop:10,paddingTop:10}}>
+            <div style={{fontSize:8,opacity:.4,letterSpacing:1,marginBottom:6,fontWeight:600}}>DEVICES</div>
+            {deviceGroup?(
+              <>
+                <div style={{fontSize:9,color:"#2ED573",marginBottom:6}}>
+                  {deviceGroup.devices.length} device{deviceGroup.devices.length>1?"s":""} paired
+                </div>
+                <button onClick={()=>{setDevicePairModal(true);setSettingsOpen(false);}}
+                  style={{width:"100%",padding:"7px 0",fontSize:9,fontFamily:"inherit",cursor:"pointer",background:"rgba(46,213,115,.08)",border:"1px solid rgba(46,213,115,.15)",borderRadius:5,color:"#2ED573",fontWeight:600}}>Manage Devices</button>
+              </>
+            ):(
+              <button onClick={()=>{setDevicePairModal(true);setSettingsOpen(false);}}
+                style={{width:"100%",padding:"7px 0",fontSize:9,fontFamily:"inherit",cursor:"pointer",background:"rgba(77,150,255,.08)",border:"1px solid rgba(77,150,255,.15)",borderRadius:5,color:"#4D96FF",fontWeight:600}}>Pair My Devices</button>
+            )}
+          </div>
         </div></>}
 
       {/* ══ CAUGHT PANEL ══ */}
-      <CaughtPanel cData={cData} nukeId={nukeId} isMobile={isMobile} fishActions={fishActions} releaseFish={releaseFish} isReadonly={isReadonly}/>
+      <CaughtPanel cData={cData} nukeId={nukeId} isMobile={isMobile} fishActions={fishActions} releaseFish={releaseFish} isReadonly={isReadonly}
+        fileTransferStatus={fileTransferStatus} onAttachFile={addFileAttachment} onRequestFile={requestFileFromPeer} tankId={caught?.tankId}/>
 
       {/* ══ TANK DRAWER (mobile) ══ */}
       <TankDrawer drawer={drawer} setDrawer={setDrawer} tanks={tanks} activeId={activeId} setActiveId={setActiveId}
@@ -403,15 +474,27 @@ export default function TaskTankApp(){
       {/* ══ SHARE MODAL ══ */}
       <ShareModal shareModal={shareModal} setShareModal={setShareModal} tanks={tanks}
         syncStatus={syncStatus} syncedTanks={syncedTanks} generateShareCode={generateShareCode} removePeer={removePeer}
-        leaveTank={leaveTank} updatePeerPermission={updatePeerPermission}/>
+        leaveTank={leaveTank} updatePeerPermission={updatePeerPermission} peerConnectionStatus={peerConnectionStatus}/>
 
       {/* ══ JOIN MODAL ══ */}
       <JoinModal joinModal={joinModal} setJoinModal={setJoinModal} parseShareCode={parseShareCode}
-        acceptPair={acceptPair} syncStatus={syncStatus} initialCode={initialPairCode.current}/>
+        acceptPair={acceptPair} acceptDevicePair={acceptDevicePair} syncStatus={syncStatus} initialCode={initialPairCode.current}/>
+
+      {/* ══ DEVICE PAIR MODAL ══ */}
+      <DevicePairModal open={devicePairModal} setOpen={setDevicePairModal}
+        deviceGroup={deviceGroup} pairDevice={pairDevice} unpairDevice={unpairDevice}
+        peerConnectionStatus={peerConnectionStatus}/>
 
       {/* ══ BULK ADD MODAL ══ */}
       <BulkAddModal bulkModal={bulkModal&&!isReadonly} setBulkModal={setBulkModal} actTank={actTank}
         activeId={activeId} bulkAddFish={bulkAddFish} initP={initP}/>
+
+      {/* ══ DEV PANEL (dev-only) ══ */}
+      {DevPanel&&devPanelOpen&&<Suspense fallback={null}><DevPanel
+        syncStatus={syncStatus} syncedTanks={syncedTanks}
+        peerConnectionStatus={peerConnectionStatus} fileTransferStatus={fileTransferStatus}
+        tanks={tanks} setTanks={setTanks} getSyncKeys={getSyncKeys}
+        onClose={()=>setDevPanelOpen(false)}/></Suspense>}
 
     </div>);
 }

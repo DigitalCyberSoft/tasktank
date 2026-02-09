@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import FishSVG from "./FishSVG.jsx";
-import { IMP, DUR_PRESETS, durLabel, todayStr, daysBetween, uid } from "./constants.js";
+import { IMP, DUR_PRESETS, durLabel, todayStr, daysBetween, fmtDate, uid, MAX_FILE_SIZE } from "./constants.js";
 import { iconBtn, inputStyle, smBtnAlt, addItemBtn } from "./styles.js";
+import { getFile } from "./fileStore.js";
 
 export function Section({title,count,total,children}){
   return(<div style={{marginBottom:12}}>
@@ -12,12 +13,18 @@ export function Section({title,count,total,children}){
   </div>);
 }
 
-function CaughtContent({ cData, fishActions, isReadonly }) {
+function fmtSize(bytes){if(!bytes)return"";if(bytes<1024)return bytes+"B";if(bytes<1048576)return(bytes/1024).toFixed(1)+"KB";return(bytes/1048576).toFixed(1)+"MB";}
+function fileIcon(mime){if(!mime)return"\uD83D\uDCCE";if(mime.startsWith("image/"))return"\uD83D\uDDBC\uFE0F";if(mime.startsWith("video/"))return"\uD83C\uDFA5";if(mime.startsWith("audio/"))return"\uD83C\uDFB5";if(mime.includes("pdf"))return"\uD83D\uDCC4";if(mime.includes("zip")||mime.includes("tar")||mime.includes("rar"))return"\uD83D\uDCE6";return"\uD83D\uDCCE";}
+
+function CaughtContent({ cData, fishActions, isReadonly, fileTransferStatus, onAttachFile, onRequestFile, tankId }) {
   const { toggleComplete, updateCaughtFish, setFishImportance, releaseFish, removeFish, log } = fishActions;
   const [editField,setEditField]=useState(null);
   const [editVal,setEditVal]=useState("");
   const [addMode,setAddMode]=useState(null);
   const [addVals,setAddVals]=useState({});
+  const [dragOver,setDragOver]=useState(false);
+  const [fileError,setFileError]=useState("");
+  const fileInputRef=useRef(null);
 
   const td=todayStr();
   const dueLabel=d=>{if(!d)return null;const diff=daysBetween(td,d);if(diff<0)return{text:`${-diff}d overdue`,color:"#FF4757"};if(diff===0)return{text:"Due today",color:"#FFD93D"};if(diff===1)return{text:"Tomorrow",color:"#4D96FF"};return{text:`${diff}d left`,color:"#6BCB77"};};
@@ -76,7 +83,7 @@ function CaughtContent({ cData, fishActions, isReadonly }) {
 
     {isReadonly?(
       <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
-        {cData.dueDate&&<><span style={{fontSize:9,opacity:.35}}>DUE</span><span style={{fontSize:10,color:"var(--tx,#d0d8e4)"}}>{cData.dueDate}</span></>}
+        {cData.dueDate&&<><span style={{fontSize:9,opacity:.35}}>DUE</span><span style={{fontSize:10,color:"var(--tx,#d0d8e4)"}}>{fmtDate(cData.dueDate)}</span></>}
         {dl&&<span style={{fontSize:9,color:dl.color,fontWeight:600}}>{dl.text}</span>}
         {cData.duration&&<><span style={{fontSize:9,opacity:.35,marginLeft:6}}>TIME</span><span style={{fontSize:10,color:"#7bb8ff"}}>{durLabel(cData.duration)}</span></>}
         <span style={{fontSize:9,opacity:.35,marginLeft:6}}>PRIORITY</span><span style={{fontSize:10,color:IMP[cData.importance||"normal"].color||"#d0d8e4"}}>{IMP[cData.importance||"normal"].badge||""} {IMP[cData.importance||"normal"].label}</span>
@@ -137,18 +144,55 @@ function CaughtContent({ cData, fishActions, isReadonly }) {
     </Section>
 
     <Section title="ATTACHMENTS" count={(cData.attachments||[]).length}>
-      {(cData.attachments||[]).map(a=>(<div key={a.id} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 0",borderBottom:"1px solid var(--brd2,rgba(255,255,255,.02))"}}>
-        <span style={{fontSize:11,opacity:.3,flexShrink:0}}>{"\uD83D\uDCCE"}</span>
-        {a.url?(<a href={a.url} target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} style={{flex:1,fontSize:10,color:"#4D96FF",textDecoration:"none",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",cursor:"pointer"}}>{a.name}</a>
-        ):(<span style={{flex:1,fontSize:10,opacity:.6,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</span>)}
-        {!isReadonly&&<button onClick={()=>removeAttach(a.id)} style={{...iconBtn,fontSize:9,padding:"2px 5px",opacity:.3}}>{"\u2715"}</button>}</div>))}
+      {/* File drop zone */}
+      {!isReadonly&&<div
+        onDragOver={e=>{e.preventDefault();e.stopPropagation();setDragOver(true);}}
+        onDragLeave={e=>{e.preventDefault();setDragOver(false);}}
+        onDrop={e=>{e.preventDefault();setDragOver(false);setFileError("");
+          const file=e.dataTransfer.files?.[0];if(!file)return;
+          if(file.size>MAX_FILE_SIZE){setFileError("File too large (max 50MB)");return;}
+          onAttachFile?.(file);}}
+        style={{padding:"10px 8px",marginBottom:6,borderRadius:6,border:`1.5px dashed ${dragOver?"rgba(77,150,255,.5)":"var(--brd,rgba(255,255,255,.06))"}`,background:dragOver?"rgba(77,150,255,.06)":"transparent",textAlign:"center",cursor:"pointer",transition:"all .15s"}}
+        onClick={()=>fileInputRef.current?.click()}>
+        <input ref={fileInputRef} type="file" style={{display:"none"}} onChange={e=>{setFileError("");const file=e.target.files?.[0];if(!file)return;
+          if(file.size>MAX_FILE_SIZE){setFileError("File too large (max 50MB)");return;}
+          onAttachFile?.(file);e.target.value="";}}/>
+        <div style={{fontSize:9,opacity:.3}}>{"\uD83D\uDCCE"} Drop file or click to attach</div>
+      </div>}
+      {fileError&&<div style={{fontSize:9,color:"#FF4757",marginBottom:4}}>{"\u26A0"} {fileError}</div>}
+
+      {(cData.attachments||[]).map(a=>{
+        const transfer=fileTransferStatus?.[a.fileId];
+        const isFile=!!a.fileId;
+        const hasBlob=!!a.hasLocalBlob;
+        const isTransferring=!!transfer;
+        return(<div key={a.id} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 0",borderBottom:"1px solid var(--brd2,rgba(255,255,255,.02))"}}>
+          <span style={{fontSize:11,flexShrink:0}}>{isFile?fileIcon(a.mimeType):"\uD83D\uDD17"}</span>
+          <div style={{flex:1,minWidth:0}}>
+            {a.url&&!a.fileId?(<a href={a.url} target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()} style={{fontSize:10,color:"#4D96FF",textDecoration:"none",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"block",cursor:"pointer"}}>{a.name}</a>
+            ):(<span style={{fontSize:10,color:"var(--tx,#d0d8e4)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"block"}}>{a.name}</span>)}
+            <div style={{display:"flex",gap:6,alignItems:"center",marginTop:1}}>
+              {a.size>0&&<span style={{fontSize:7,opacity:.3}}>{fmtSize(a.size)}</span>}
+              {isFile&&hasBlob&&<span style={{fontSize:7,color:"#2ED573"}}>{"\u2713"} Local</span>}
+              {isFile&&!hasBlob&&!isTransferring&&<span style={{fontSize:7,color:"#FFD93D"}}>{"\u2601"} Peer required</span>}
+              {isTransferring&&<div style={{flex:1,maxWidth:80,height:3,borderRadius:2,background:"var(--brd,rgba(255,255,255,.06))",overflow:"hidden"}}>
+                <div style={{height:"100%",borderRadius:2,background:"#4D96FF",width:`${(transfer.progress||0)*100}%`,transition:"width .2s"}}/>
+              </div>}
+            </div>
+          </div>
+          {isFile&&hasBlob&&<button onClick={async(e)=>{e.stopPropagation();const rec=await getFile(a.fileId);if(rec?.blob){const url=URL.createObjectURL(rec.blob);window.open(url,"_blank");setTimeout(()=>URL.revokeObjectURL(url),60000);}}} style={{...iconBtn,fontSize:9,padding:"2px 5px",color:"#4D96FF"}} title="Download">{"\u2B07"}</button>}
+          {isFile&&!hasBlob&&!isTransferring&&<button onClick={()=>onRequestFile?.(a.fileId,cData.id,tankId)} disabled={!onRequestFile} style={{...iconBtn,fontSize:8,padding:"2px 5px",opacity:.4}} title="Request from peer">{"\u2B07"}</button>}
+          {!isReadonly&&<button onClick={()=>removeAttach(a.id)} style={{...iconBtn,fontSize:9,padding:"2px 5px",opacity:.3}}>{"\u2715"}</button>}
+        </div>);})}
+
+      {/* URL attachment (secondary) */}
       {!isReadonly&&(addMode==="attach"?(<div style={{display:"flex",flexDirection:"column",gap:4,marginTop:6}}>
         <input autoFocus placeholder="Name\u2026" value={addVals.attName||""} onChange={e=>setAddVals(p=>({...p,attName:e.target.value}))} onKeyDown={e=>{if(e.key==="Escape")setAddMode(null);}} style={inputStyle}/>
         <div style={{display:"flex",gap:4}}>
           <input placeholder="Link (optional)" value={addVals.attUrl||""} onChange={e=>setAddVals(p=>({...p,attUrl:e.target.value}))}
             onKeyDown={e=>{if(e.key==="Enter"){addAttach(addVals.attName||"",addVals.attUrl);setAddVals({});setAddMode(null);}}} style={inputStyle}/>
           <button onClick={()=>{addAttach(addVals.attName||"",addVals.attUrl);setAddVals({});setAddMode(null);}} style={smBtnAlt}>+</button></div></div>
-      ):(<button onClick={()=>{setAddMode("attach");setAddVals({});}} style={addItemBtn}>+ Add attachment</button>))}
+      ):(<button onClick={()=>{setAddMode("attach");setAddVals({});}} style={{...addItemBtn,fontSize:8,opacity:.4}}>{"\uD83D\uDD17"} Add link attachment</button>))}
     </Section>
 
     <div style={{display:"flex",gap:8,marginTop:16,paddingBottom:8}}>
@@ -159,14 +203,14 @@ function CaughtContent({ cData, fishActions, isReadonly }) {
   </div>);
 }
 
-export default function CaughtPanel({ cData, nukeId, isMobile, fishActions, releaseFish, isReadonly }) {
+export default function CaughtPanel({ cData, nukeId, isMobile, fishActions, releaseFish, isReadonly, fileTransferStatus, onAttachFile, onRequestFile, tankId }) {
   if(!cData||nukeId)return null;
   return(<>
     <div onClick={releaseFish} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.4)",zIndex:28}}/>
     {isMobile?(
       <div style={{position:"absolute",bottom:0,left:0,right:0,maxHeight:"78vh",background:"var(--surf,rgba(8,12,24,.97))",borderRadius:"16px 16px 0 0",zIndex:30,display:"flex",flexDirection:"column",boxShadow:"0 -8px 40px rgba(0,0,0,.5)",animation:"slideUp .25s ease-out",backdropFilter:"blur(10px)"}}>
         <div style={{display:"flex",justifyContent:"center",padding:"8px 0 4px"}}><div style={{width:36,height:4,borderRadius:2,background:"var(--brd3,rgba(255,255,255,.1))"}}/></div>
-        <CaughtContent cData={cData} fishActions={fishActions} isReadonly={isReadonly}/>
+        <CaughtContent cData={cData} fishActions={fishActions} isReadonly={isReadonly} fileTransferStatus={fileTransferStatus} onAttachFile={onAttachFile} onRequestFile={onRequestFile} tankId={tankId}/>
       </div>
     ):(
       <div style={{position:"absolute",top:0,right:0,bottom:0,width:"min(340px, 35vw)",background:"var(--surf,rgba(8,12,24,.97))",zIndex:30,display:"flex",flexDirection:"column",boxShadow:"-8px 0 40px rgba(0,0,0,.5)",animation:"fadeIn .2s ease-out",backdropFilter:"blur(10px)",borderLeft:"1px solid var(--brd,rgba(255,255,255,.04))"}}>
@@ -174,7 +218,7 @@ export default function CaughtPanel({ cData, nukeId, isMobile, fishActions, rele
           <span style={{fontSize:9,opacity:.3,letterSpacing:3}}>{"\uD83C\uDFA3"} CAUGHT</span>
           <button onClick={releaseFish} style={{...iconBtn,fontSize:10}}>{"\u2715"}</button>
         </div>
-        <CaughtContent cData={cData} fishActions={fishActions} isReadonly={isReadonly}/>
+        <CaughtContent cData={cData} fishActions={fishActions} isReadonly={isReadonly} fileTransferStatus={fileTransferStatus} onAttachFile={onAttachFile} onRequestFile={onRequestFile} tankId={tankId}/>
       </div>
     )}
   </>);

@@ -1,12 +1,13 @@
 import { SPD } from "./constants.js";
 import { iconBtn } from "./styles.js";
 
-export default function TopBar({ showSingle, setDrawer, stStatus, setJoinModal, actTank, headerEdit, headerName, setHeaderName, setHeaderEdit, saveHeaderName, effectiveZoom, cycleZoom, tanks, setListView, setShareModal, cycleSpeed, openPurge, isReadonly, setSettingsOpen }) {
+export default function TopBar({ showSingle, setDrawer, stStatus, setJoinModal, actTank, headerEdit, headerName, setHeaderName, setHeaderEdit, saveHeaderName, effectiveZoom, cycleZoom, tanks, setListView, setShareModal, cycleSpeed, openPurge, isReadonly, setSettingsOpen, peerConnStatus }) {
   return(
     <div style={{padding:"8px 12px",display:"flex",alignItems:"center",gap:8,background:"var(--bar,rgba(5,9,18,.96))",borderBottom:"1px solid var(--brd2,rgba(255,255,255,.03))",zIndex:20,flexShrink:0}}>
       {showSingle&&<button onClick={()=>setDrawer(true)} style={iconBtn}>{"\u2630"}</button>}
       <span style={{fontSize:showSingle?9:12,fontWeight:700,letterSpacing:3,color:"#4D96FF",marginRight:2,flexShrink:0}}>TASKTANK</span>
       <span onClick={()=>setJoinModal(true)} title={`Sync: ${stStatus} · Tap to join`} style={{fontSize:showSingle?8:10,cursor:"pointer",flexShrink:0,padding:showSingle?"1px 5px":"2px 7px",borderRadius:4,background:stStatus==="connected"?"rgba(46,213,115,.08)":"var(--inp,rgba(255,255,255,.02))",border:`1px solid ${stStatus==="connected"?"rgba(46,213,115,.2)":"var(--brd,rgba(255,255,255,.04))"}`,color:stStatus==="connected"?"#2ED573":"var(--tx3,#556)"}}>{stStatus==="connected"?"\u26A1":"\u25CB"}</span>
+      {(()=>{const n=Object.values(peerConnStatus||{}).filter(s=>s==="connected").length;if(!n)return null;return <span title={`${n} direct peer${n>1?"s":""}`} style={{fontSize:showSingle?8:9,padding:showSingle?"1px 4px":"2px 6px",borderRadius:3,background:"rgba(77,150,255,.12)",border:"1px solid rgba(77,150,255,.25)",color:"#4D96FF",fontWeight:700,flexShrink:0}}>{n} {"\u21C4"}</span>;})()}
       {showSingle&&actTank?(!isReadonly&&headerEdit?(
         <input autoFocus value={headerName} onChange={e=>setHeaderName(e.target.value)}
           onBlur={saveHeaderName} onKeyDown={e=>{if(e.key==="Enter")e.target.blur();if(e.key==="Escape")setHeaderEdit(false);}}

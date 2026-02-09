@@ -14,6 +14,7 @@ export const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,
 export const clamp=(v,a,b)=>Math.min(Math.max(v,a),b);
 export const todayStr=()=>new Date().toISOString().slice(0,10);
 export const daysBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
+export const fmtDate=d=>{if(!d)return"";try{return new Date(d+"T00:00:00").toLocaleDateString();}catch{return d;}};
 export const getGrid=n=>{if(n<=1)return{c:1,r:1};if(n<=2)return{c:2,r:1};if(n<=3)return{c:3,r:1};if(n<=4)return{c:2,r:2};return{c:3,r:2};};
 export const getZoomGrid=(zoom,totalCards)=>{
   // When zoom is set, lay out to fit that many visible tanks
@@ -23,7 +24,7 @@ export const getZoomGrid=(zoom,totalCards)=>{
   if(zoom<=4)return{c:2,r:2};
   return{c:3,r:2};
 };
-const getDeviceId=()=>{let d=null;try{d=localStorage.getItem("tt-did");}catch{}if(!d){d=uid()+"-"+uid();try{localStorage.setItem("tt-did",d);}catch{}}return d;};
+const getDeviceId=()=>{let d=null;try{d=localStorage.getItem("tt-did");}catch{}if(!d){try{const m=document.cookie.match(/(?:^|; )tt-did=([^;]+)/);if(m)d=m[1];}catch{}}if(!d){d=uid()+"-"+uid();}try{localStorage.setItem("tt-did",d);}catch{}try{document.cookie=`tt-did=${d};max-age=${60*60*24*365*5};path=/;SameSite=Lax`;}catch{}return d;};
 export const DEVICE_ID=typeof window!=="undefined"?getDeviceId():"unknown";
 export const nowISO=()=>new Date().toISOString();
 
@@ -43,8 +44,27 @@ export const db={
   async save(d){try{localStorage.setItem("tasktank-v5",JSON.stringify(d));}catch{}},
 };
 
-export const GUN_RELAYS=["https://gun-manhattan.herokuapp.com/gun","https://gun-us.herokuapp.com/gun","https://gunjs.herokuapp.com/gun"];
+export const NOSTR_RELAYS=[
+  "wss://relay.damus.io","wss://nos.lol","wss://relay.snort.social",
+  "wss://relay.primal.net","wss://nostr.mom","wss://nostr.einundzwanzig.space",
+  "wss://yabu.me","wss://nostr.oxtr.dev","wss://relay.mostr.pub",
+  "wss://soloco.nl","wss://nostr.data.haus","wss://relay.nostr.net",
+  "wss://relay.noswhere.com",
+];
 export const SYNC_CODE_VERSION=2;
+export const STUN_SERVERS = [
+  { urls: "stun:stun.l.google.com:19302" },
+  { urls: "stun:stun1.l.google.com:19302" },
+];
+export const RTC_CONFIG = { iceServers: STUN_SERVERS };
+export const SIGNALING_KIND = 20078;
+export const PRESENCE_INTERVAL = 30000;
+export const PRESENCE_TIMEOUT = 90000;
+export const NOSTR_PUSH_INTERVAL_CONNECTED = 30000;
+export const MAX_SYNC_DEVICES = 20;
+export const DEVICE_PAIR_CODE_VERSION = 1;
+export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+export const FILE_CHUNK_SIZE = 64 * 1024;      // 64KB
 
 // Export task lists as text
 export const exportPlain=(fishes,includeCompleted)=>{
@@ -60,10 +80,10 @@ export const exportRich=(fishes,includeCompleted)=>{
     if(imp!=="normal")line+=` [${imp}]`;
     if(f.dueDate){
       const diff=daysBetween(td,f.dueDate);
-      if(diff<0)line+=` (${-diff}d overdue)`;
+      if(diff<0)line+=` (${fmtDate(f.dueDate)}, ${-diff}d overdue)`;
       else if(diff===0)line+=` (due today)`;
       else if(diff===1)line+=` (tomorrow)`;
-      else line+=` (${diff}d left)`;
+      else line+=` (${fmtDate(f.dueDate)}, ${diff}d left)`;
     }
     if(f.duration)line+=` ~${durLabel(f.duration)}`;
     const cl=f.checklist||[];

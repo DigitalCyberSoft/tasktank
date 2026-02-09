@@ -5,13 +5,13 @@ export default function TankRenderer({ tank, caught, showSingle, effectiveZoom, 
   const stress=Math.min((tank.fishes||[]).length/10,1);
   return(
     <div ref={el=>{if(el)tE.current[tank.id]=el;}} style={{flex:1,position:"relative",overflow:"hidden",minHeight:0,
-      background:`linear-gradient(180deg,${stress>.7?"#0a1118":"#081422"} 0%,${stress>.7?"#101a24":"#0a1c30"} 50%,${stress>.7?"#132028":"#0d2438"} 100%)`,transition:"background 3s"}}>
-      <div style={{position:"absolute",inset:0,pointerEvents:"none",background:"radial-gradient(ellipse 60% 16% at 42% 0%,rgba(70,160,255,.03) 0%,transparent 100%)"}}/>
+      background:stress>.7?"linear-gradient(180deg,var(--ws1) 0%,var(--ws2) 50%,var(--ws3) 100%)":"linear-gradient(180deg,var(--w1) 0%,var(--w2) 50%,var(--w3) 100%)",transition:"background 3s"}}>
+      <div style={{position:"absolute",inset:0,pointerEvents:"none",background:"radial-gradient(ellipse 60% 16% at 42% 0%,var(--wsurf) 0%,transparent 100%)"}}/>
       <div style={{position:"absolute",top:0,left:0,right:0,height:"8%",background:"linear-gradient(to bottom,rgba(100,180,255,.04),transparent)",pointerEvents:"none"}}/>
-      <div style={{position:"absolute",bottom:0,left:0,right:0,height:"22%",background:"linear-gradient(to top,rgba(2,4,8,.55),transparent)",pointerEvents:"none"}}/>
-      {[12,40,72,88].map((l,i)=>(<div key={`w${i}`} style={{position:"absolute",bottom:0,left:`${l}%`,width:4,height:`${14+i*6}%`,background:"linear-gradient(to top,#1a4a3a,#1d6a4a22)",borderRadius:"40% 60% 0 0",transformOrigin:"bottom center",animation:`sway ${2+i*.35}s ${i*.3}s ease-in-out infinite`,pointerEvents:"none",opacity:0.28}}/>))}
+      <div style={{position:"absolute",bottom:0,left:0,right:0,height:"22%",background:"linear-gradient(to top,var(--wbot),transparent)",pointerEvents:"none"}}/>
+      {[12,40,72,88].map((l,i)=>(<div key={`w${i}`} style={{position:"absolute",bottom:0,left:`${l}%`,width:4,height:`${14+i*6}%`,background:"linear-gradient(to top,var(--wsea1),var(--wsea2))",borderRadius:"40% 60% 0 0",transformOrigin:"bottom center",animation:`sway ${2+i*.35}s ${i*.3}s ease-in-out infinite`,pointerEvents:"none",opacity:0.28}}/>))}
       {[0,1,2].map(i=>(<div key={`b${i}`} style={{position:"absolute",left:`${15+i*35}%`,bottom:0,width:2+i,height:2+i,borderRadius:"50%",border:"1px solid rgba(255,255,255,.05)",animation:`rise ${7+i*3}s ${i*2}s linear infinite`,pointerEvents:"none"}}/>))}
-      <div style={{position:"absolute",inset:0,pointerEvents:"none",borderTop:"1px solid rgba(255,255,255,.03)"}}/>
+      <div style={{position:"absolute",inset:0,pointerEvents:"none",borderTop:"1px solid var(--brd2,rgba(255,255,255,.03))"}}/>
 
       {(tank.fishes||[]).filter(f=>caught?.fishId!==f.id).map(fish=>{
         const imp=IMP[fish.importance||"normal"];const dl=fish.completed?null:dueLabel(fish.dueDate);const fc=!!fish.completed;
@@ -26,7 +26,7 @@ export default function TankRenderer({ tank, caught, showSingle, effectiveZoom, 
           </div>
           <div ref={el=>{if(el)fL.current[fish.id]=el;}} style={{
             textAlign:"center",fontSize:showSingle?10:10,lineHeight:1.2,
-            color:fc?"rgba(46,213,115,.5)":(dl?.color||(imp.color?imp.color+"dd":"rgba(255,255,255,.6)")),
+            color:fc?"rgba(46,213,115,.5)":(dl?.color||(imp.color?imp.color+"dd":"var(--fish-text)")),
             marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",
             maxWidth:showSingle?120:110,textShadow:"0 1px 5px rgba(0,0,0,.95)",pointerEvents:"none",
             letterSpacing:.3,background:"rgba(0,0,0,.4)",padding:"2px 6px",borderRadius:4,transformOrigin:"center top",

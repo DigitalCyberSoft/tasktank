@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { IMP, DUR_PRESETS, durLabel, todayStr, daysBetween, DEVICE_ID, nowISO, exportPlain, exportRich } from "./constants.js";
+import { IMP, DUR_PRESETS, durLabel, todayStr, daysBetween, fmtDate, DEVICE_ID, nowISO, exportPlain, exportRich } from "./constants.js";
+import { generateDevicePairCode } from "./deviceGroup.js";
 import { iconBtn, tinyBtn } from "./styles.js";
 
 // ══════════════════════════════════════════════════════════════
@@ -117,7 +118,7 @@ export function ListViewOverlay({ listView, setListView, actTank, catchFish, tog
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:12,fontWeight:600,color:"var(--tx,#f8e8e8)",marginBottom:4}}>{f.task}</div>
                   <div style={{fontSize:9,opacity:.5,display:"flex",gap:8,flexWrap:"wrap"}}>
-                    {f.dueDate&&<span style={{color:daysBetween(todayStr(),f.dueDate)<0?"#FF4757":"#FFD93D"}}>Due: {f.dueDate}</span>}
+                    {f.dueDate&&<span style={{color:daysBetween(todayStr(),f.dueDate)<0?"#FF4757":"#FFD93D"}}>Due: {fmtDate(f.dueDate)}</span>}
                     {f.duration&&<span>{"\u23F1"} {durLabel(f.duration)}</span>}
                     {(f.checklist||[]).length>0&&<span>{"\u2611"} {(f.checklist||[]).filter(c=>c.done).length}/{(f.checklist||[]).length}</span>}
                   </div>
@@ -138,7 +139,7 @@ export function ListViewOverlay({ listView, setListView, actTank, catchFish, tog
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:12,fontWeight:600,color:"var(--tx,#f8f4e8)",marginBottom:4}}>{f.task}</div>
                   <div style={{fontSize:9,opacity:.5,display:"flex",gap:8,flexWrap:"wrap"}}>
-                    {f.dueDate&&<span>Due: {f.dueDate}</span>}
+                    {f.dueDate&&<span>Due: {fmtDate(f.dueDate)}</span>}
                     {f.duration&&<span>{"\u23F1"} {durLabel(f.duration)}</span>}
                     {(f.checklist||[]).length>0&&<span>{"\u2611"} {(f.checklist||[]).filter(c=>c.done).length}/{(f.checklist||[]).length}</span>}
                   </div>
@@ -159,7 +160,7 @@ export function ListViewOverlay({ listView, setListView, actTank, catchFish, tog
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:12,fontWeight:500,color:"var(--tx,#d0d8e4)",marginBottom:4}}>{f.task}</div>
                   <div style={{fontSize:9,opacity:.5,display:"flex",gap:8,flexWrap:"wrap"}}>
-                    {f.dueDate&&<span>Due: {f.dueDate}</span>}
+                    {f.dueDate&&<span>Due: {fmtDate(f.dueDate)}</span>}
                     {f.duration&&<span>{"\u23F1"} {durLabel(f.duration)}</span>}
                     {(f.checklist||[]).length>0&&<span>{"\u2611"} {(f.checklist||[]).filter(c=>c.done).length}/{(f.checklist||[]).length}</span>}
                   </div>
@@ -238,26 +239,27 @@ export function PurgeOverlay({ nukeId, nukeTank, keepers, toggleK, doPurge, setN
 // ══════════════════════════════════════════════════════════════
 // SHARE MODAL — sharePerm state is internal
 // ══════════════════════════════════════════════════════════════
-export function ShareModal({ shareModal, setShareModal, tanks, syncStatus, syncedTanks, generateShareCode, removePeer, leaveTank, updatePeerPermission }) {
+export function ShareModal({ shareModal, setShareModal, tanks, syncStatus, syncedTanks, generateShareCode, removePeer, leaveTank, updatePeerPermission, peerConnectionStatus }) {
   const [sharePerm,setSharePerm]=useState("shared");
   const [code,setCode]=useState("");
   const [loading,setLoading]=useState(false);
   const [qrUrl,setQrUrl]=useState(null);
   const [linkFlash,setLinkFlash]=useState(false);
   const [recipientName,setRecipientName]=useState("");
+  const [directConn,setDirectConn]=useState(true);
 
-  // Generate code when modal opens or perm/recipient changes
-  const prevRef=useRef({shareModal:null,sharePerm:null,recipientName:null});
+  // Generate code when modal opens or perm/recipient/directConn changes
+  const prevRef=useRef({shareModal:null,sharePerm:null,recipientName:null,directConn:null});
   useEffect(()=>{
     if(!shareModal)return;
-    if(prevRef.current.shareModal===shareModal&&prevRef.current.sharePerm===sharePerm&&prevRef.current.recipientName===recipientName)return;
-    prevRef.current={shareModal,sharePerm,recipientName};
+    if(prevRef.current.shareModal===shareModal&&prevRef.current.sharePerm===sharePerm&&prevRef.current.recipientName===recipientName&&prevRef.current.directConn===directConn)return;
+    prevRef.current={shareModal,sharePerm,recipientName,directConn};
     setLoading(true);setCode("");setQrUrl(null);
-    generateShareCode(shareModal,sharePerm,recipientName).then(c=>{setCode(c);setLoading(false);});
-  },[shareModal,sharePerm,recipientName,generateShareCode]);
+    generateShareCode(shareModal,sharePerm,recipientName,directConn).then(c=>{setCode(c);setLoading(false);});
+  },[shareModal,sharePerm,recipientName,directConn,generateShareCode]);
 
   // Build pairing link from current location + code
-  const pairLink=code?(window.location.origin+window.location.pathname+"?pair="+encodeURIComponent(code)):"";
+  const pairLink=code?(window.location.origin+window.location.pathname+"?pair="+code):"";
 
   // Generate real QR code when code is available — encodes full URL for scan-to-open
   useEffect(()=>{
@@ -287,7 +289,7 @@ export function ShareModal({ shareModal, setShareModal, tanks, syncStatus, synce
         <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:14,padding:"8px 10px",borderRadius:6,background:syncStatus==="connected"?"rgba(46,213,115,.06)":"var(--inp,rgba(255,255,255,.02))",border:`1px solid ${syncStatus==="connected"?"rgba(46,213,115,.12)":"var(--brd,rgba(255,255,255,.04))"}`}}>
           <span style={{fontSize:14}}>{syncStatus==="connected"?"\u26A1":"\u25CB"}</span>
           <div><div style={{fontSize:9,fontWeight:600,color:syncStatus==="connected"?"#2ED573":"var(--tx2,#888)"}}>{syncStatus==="connected"?"P2P Sync Active":"P2P Sync Offline"}</div>
-          <div style={{fontSize:8,opacity:.35,marginTop:1}}>{syncStatus==="connected"?(isSynced?"This tank is syncing via Gun.js relays":"Share to start syncing"):"Relay servers unreachable — will retry"}</div></div>
+          <div style={{fontSize:8,opacity:.35,marginTop:1}}>{syncStatus==="connected"?(isSynced?"This tank is syncing via Nostr relays":"Share to start syncing"):"Relay servers unreachable — will retry"}</div></div>
         </div>
 
         {/* Permission selector */}
@@ -303,6 +305,18 @@ export function ShareModal({ shareModal, setShareModal, tanks, syncStatus, synce
         <input value={recipientName} onChange={e=>setRecipientName(e.target.value)} placeholder="Recipient name\u2026"
           style={{width:"100%",padding:"8px 10px",background:"var(--inp,rgba(255,255,255,.04))",border:"1px solid rgba(77,150,255,.08)",borderRadius:6,color:"var(--tx,#d0d8e4)",fontSize:10,fontFamily:"inherit",boxSizing:"border-box",marginBottom:12}}/>
         </>}
+
+        {/* Direct Connection toggle */}
+        {isOwner&&<><div style={{fontSize:9,opacity:.35,letterSpacing:1.5,marginBottom:6,fontWeight:600}}>DIRECT CONNECTION</div>
+        <div onClick={()=>setDirectConn(p=>!p)} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 10px",marginBottom:14,borderRadius:6,cursor:"pointer",background:directConn?"rgba(46,213,115,.06)":"rgba(255,165,2,.06)",border:`1px solid ${directConn?"rgba(46,213,115,.12)":"rgba(255,165,2,.12)"}`,transition:"all .15s"}}>
+          <div style={{width:34,height:18,borderRadius:9,background:directConn?"#2ED573":"rgba(255,255,255,.12)",position:"relative",transition:"background .2s",flexShrink:0}}>
+            <div style={{width:14,height:14,borderRadius:7,background:"#fff",position:"absolute",top:2,left:directConn?18:2,transition:"left .2s",boxShadow:"0 1px 3px rgba(0,0,0,.3)"}}/>
+          </div>
+          <div>
+            <div style={{fontSize:10,fontWeight:600,color:directConn?"#2ED573":"#FFA502"}}>{directConn?"On":"Off"}</div>
+            <div style={{fontSize:7,opacity:.35,marginTop:1}}>{directConn?"Faster sync, but shares IP addresses with peers":"Relay-only: slower but preserves IP privacy"}</div>
+          </div>
+        </div></>}
 
         {/* Pairing code */}
         {isOwner&&<><div style={{fontSize:9,opacity:.35,letterSpacing:1.5,marginBottom:6,fontWeight:600}}>PAIRING CODE</div>
@@ -331,7 +345,7 @@ export function ShareModal({ shareModal, setShareModal, tanks, syncStatus, synce
         ):peers.map(p=>(<div key={p.deviceId} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",marginBottom:4,borderRadius:6,background:"var(--inp,rgba(255,255,255,.015))",border:"1px solid var(--brd2,rgba(255,255,255,.03))"}}>
           <span style={{fontSize:14,flexShrink:0}}>{"\uD83D\uDCF1"}</span>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:10,fontWeight:600,color:"var(--tx,#d0d8e4)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.deviceName||p.deviceId.slice(0,12)}</div>
+            <div style={{fontSize:10,fontWeight:600,color:"var(--tx,#d0d8e4)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:4}}>{p.deviceName||p.deviceId.slice(0,12)}<span style={{fontSize:7,padding:"1px 4px",borderRadius:3,background:peerConnectionStatus?.[p.deviceId]==="connected"?"rgba(77,150,255,.15)":"rgba(255,255,255,.05)",border:`1px solid ${peerConnectionStatus?.[p.deviceId]==="connected"?"rgba(77,150,255,.3)":"rgba(255,255,255,.08)"}`,color:peerConnectionStatus?.[p.deviceId]==="connected"?"#4D96FF":"var(--tx3,#888)",fontWeight:700,letterSpacing:0.5,flexShrink:0}}>{!directConn?"ANONYMOUS":peerConnectionStatus?.[p.deviceId]==="connected"?"DIRECT":"RELAY"}</span></div>
             <div style={{fontSize:7,opacity:.3,marginTop:1}}>
               {isOwner?(<span onClick={()=>updatePeerPermission(tank.id,p.deviceId,p.permission==="shared"?"readonly":"shared")}
                 style={{color:p.permission==="shared"?"#6BCB77":"#4D96FF",fontWeight:600,cursor:"pointer",padding:"1px 4px",borderRadius:3,background:p.permission==="shared"?"rgba(107,203,119,.1)":"rgba(77,150,255,.1)",border:`1px solid ${p.permission==="shared"?"rgba(107,203,119,.2)":"rgba(77,150,255,.2)"}`}}>{p.permission||"shared"}</span>
@@ -360,7 +374,7 @@ export function ShareModal({ shareModal, setShareModal, tanks, syncStatus, synce
 // ══════════════════════════════════════════════════════════════
 // JOIN / PAIR MODAL — joinCode, joinError state is internal
 // ══════════════════════════════════════════════════════════════
-export function JoinModal({ joinModal, setJoinModal, parseShareCode, acceptPair, syncStatus, initialCode }) {
+export function JoinModal({ joinModal, setJoinModal, parseShareCode, acceptPair, acceptDevicePair, syncStatus, initialCode }) {
   const [joinCode,setJoinCode]=useState("");
   const [joinError,setJoinError]=useState("");
   const [scanning,setScanning]=useState(false);
@@ -449,14 +463,26 @@ export function JoinModal({ joinModal, setJoinModal, parseShareCode, acceptPair,
       {joinError&&<div style={{fontSize:9,color:"#FF4757",marginTop:6}}>{"\u26A0"} {joinError}</div>}
       {joinCode.trim().length>10&&!joinError&&(()=>{const parsed=parseShareCode(joinCode);
         if(parsed.error)return <div style={{fontSize:9,color:"#FF4757",marginTop:6}}>{"\u26A0"} {parsed.error}</div>;
+        if(parsed.isDevicePair){
+          const d=parsed.data;
+          return(<div style={{marginTop:10,padding:"10px 12px",borderRadius:8,background:"rgba(46,213,115,.04)",border:"1px solid rgba(46,213,115,.15)"}}>
+            <div style={{fontSize:11,fontWeight:700,color:"#2ED573",marginBottom:4}}>{"\uD83D\uDD17"} Link Your Devices</div>
+            <div style={{fontSize:9,opacity:.5,lineHeight:1.5,marginBottom:4}}>
+              From: <span style={{color:"var(--tx,#d0d8e4)",fontWeight:600}}>{d.deviceName}</span>
+            </div>
+            <div style={{fontSize:8,opacity:.3,lineHeight:1.5}}>All tanks will auto-sync between your paired devices. Per-tank sharing with others is unchanged.</div>
+            <button onClick={()=>{acceptDevicePair(d);setJoinCode("");setJoinError("");setJoinModal(false);}} style={{marginTop:10,width:"100%",padding:"10px 0",background:"linear-gradient(135deg,#2ED573,#1abc9c)",border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"inherit",letterSpacing:1}}>{"\u2713"} Accept & Link</button>
+          </div>);
+        }
         const d=parsed.data;
         return(<div style={{marginTop:10,padding:"10px 12px",borderRadius:8,background:"rgba(77,150,255,.04)",border:"1px solid rgba(77,150,255,.12)"}}>
           <div style={{fontSize:11,fontWeight:700,color:"#7bb8ff",marginBottom:4}}>{d.tankName||"Shared Tank"}</div>
           {d.recipientName&&<div style={{fontSize:9,color:"#6BCB77",fontWeight:600,marginBottom:4}}>For: {d.recipientName}</div>}
           <div style={{fontSize:9,opacity:.4,lineHeight:1.5}}>
-            From: {d.deviceName||"Unknown device"}{"\n"}
-            Fish: {d.fishCount||0}{" \u00B7 "}Permission: <span style={{color:d.permission==="shared"?"#6BCB77":"#4D96FF",fontWeight:600}}>{d.permission}</span>
+            {d.deviceName&&d.deviceName.length>12&&<>From: {d.deviceName}{"\n"}</>}
+            {d.fishCount>0&&<>Fish: {d.fishCount}{" \u00B7 "}</>}Permission: <span style={{color:d.permission==="shared"?"#6BCB77":"#4D96FF",fontWeight:600}}>{d.permission}</span>
             {d.syncId&&<span>{"\n"}Sync: encrypted P2P</span>}
+            {d.relayOnly&&<span style={{display:"block",marginTop:2,color:"#FFA502",fontWeight:600}}>Mode: Relay only (anonymous)</span>}
           </div>
           <button onClick={()=>{acceptPair(d);setJoinCode("");setJoinError("");}} style={{marginTop:10,width:"100%",padding:"10px 0",background:"linear-gradient(135deg,#4D96FF,#6BCB77)",border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"inherit",letterSpacing:1}}>{"\u2713"} Accept & Sync</button>
         </div>);
@@ -533,6 +559,158 @@ export function BulkAddModal({ bulkModal, setBulkModal, actTank, activeId, bulkA
           <button onClick={close} style={{flex:1,padding:"12px 0",background:"var(--inp,rgba(255,255,255,.04))",border:"1px solid var(--brd,rgba(255,255,255,.08))",borderRadius:8,color:"var(--tx2,#a8b4c0)",cursor:"pointer",fontSize:11,fontFamily:"inherit"}}>Cancel</button>
           <button onClick={doAdd} disabled={!bulkText.trim()||!activeId} style={{flex:2,padding:"12px 0",border:"none",borderRadius:8,fontWeight:700,cursor:bulkText.trim()&&activeId?"pointer":"not-allowed",fontSize:12,fontFamily:"inherit",letterSpacing:1,background:bulkText.trim()&&activeId?"linear-gradient(135deg,#4D96FF,#6BCB77)":"rgba(255,255,255,.04)",color:bulkText.trim()&&activeId?"#fff":"#555",opacity:bulkText.trim()&&activeId?1:.4}}>{"\uD83D\uDC20"} Add All Fish</button>
         </div>
+      </div>
+    </div></>);
+}
+
+// ══════════════════════════════════════════════════════════════
+// DEVICE PAIR MODAL — pair/manage devices
+// ══════════════════════════════════════════════════════════════
+export function DevicePairModal({ open, setOpen, deviceGroup, pairDevice, unpairDevice, peerConnectionStatus }) {
+  const [deviceName,setDeviceName]=useState("");
+  const [code,setCode]=useState("");
+  const [qrUrl,setQrUrl]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [showAddDevice,setShowAddDevice]=useState(false);
+
+  // Reset state when modal opens
+  useEffect(()=>{
+    if(!open){setCode("");setQrUrl(null);setLoading(false);setShowAddDevice(false);setDeviceName("");}
+  },[open]);
+
+  const doInitPair=async()=>{
+    setLoading(true);
+    try{
+      const dg=await pairDevice(deviceName||undefined);
+      const c=generateDevicePairCode(dg.groupId,dg.groupKey,dg.deviceName,dg.relays);
+      setCode(c);
+    }catch{} finally{setLoading(false);}
+  };
+
+  const doGenerateAddCode=()=>{
+    if(!deviceGroup)return;
+    const c=generateDevicePairCode(deviceGroup.groupId,deviceGroup.groupKey,deviceGroup.deviceName,deviceGroup.relays);
+    setCode(c);
+    setShowAddDevice(true);
+  };
+
+  // Build pairing link from code
+  const pairLink=code?(window.location.origin+window.location.pathname+"?pair="+code):"";
+
+  // Generate QR code
+  useEffect(()=>{
+    if(!pairLink)return;
+    import("qrcode").then(QRCode=>{
+      QRCode.toDataURL(pairLink,{width:240,margin:1,color:{dark:"#0a0e1a",light:"#ffffff"}}).then(url=>setQrUrl(url)).catch(()=>{});
+    }).catch(()=>{});
+  },[pairLink]);
+
+  if(!open)return null;
+  const close=()=>setOpen(false);
+
+  // No device group yet — initial pairing
+  if(!deviceGroup||(!deviceGroup.groupId)){
+    return(<><div onClick={close} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.6)",zIndex:48}}/>
+      <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:"min(360px, 90vw)",maxHeight:"85vh",background:"var(--modal,rgba(8,14,28,.98))",border:"1px solid rgba(46,213,115,.15)",borderRadius:14,padding:20,zIndex:50,animation:"fadeIn .2s ease-out",boxShadow:"0 12px 40px rgba(0,0,0,.6)",overflow:"auto"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+          <div style={{fontSize:12,fontWeight:700,letterSpacing:2,color:"#2ED573"}}>{"\uD83D\uDD17"} PAIR DEVICES</div>
+          <button onClick={close} style={{...iconBtn,fontSize:14}}>{"\u2715"}</button>
+        </div>
+        {!code?(
+          <>
+            <div style={{fontSize:10,opacity:.4,marginBottom:12,lineHeight:1.5}}>Link your devices so all tanks auto-sync between them. Per-tank sharing with others is unchanged.</div>
+            <div style={{fontSize:9,opacity:.35,letterSpacing:1,marginBottom:6,fontWeight:600}}>DEVICE NAME (OPTIONAL)</div>
+            <input value={deviceName} onChange={e=>setDeviceName(e.target.value)} placeholder="My Laptop" onKeyDown={e=>{if(e.key==="Enter")doInitPair();}}
+              style={{width:"100%",padding:"10px 12px",background:"var(--inp,rgba(255,255,255,.04))",border:"1px solid rgba(46,213,115,.12)",borderRadius:8,color:"var(--tx,#d0d8e4)",fontSize:11,fontFamily:"inherit",boxSizing:"border-box",marginBottom:14}}/>
+            <button onClick={doInitPair} disabled={loading}
+              style={{width:"100%",padding:"12px 0",background:loading?"rgba(255,255,255,.04)":"linear-gradient(135deg,#2ED573,#1abc9c)",border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:12,cursor:loading?"wait":"pointer",fontFamily:"inherit",letterSpacing:1}}>{loading?"Setting up...":"\uD83D\uDD17 Generate Pairing Code"}</button>
+          </>
+        ):(
+          <>
+            <div style={{fontSize:10,opacity:.4,marginBottom:10,lineHeight:1.5}}>Share this code with your other device. Open TaskTank there, tap Join, and paste or scan this code.</div>
+            {/* QR code */}
+            <div style={{display:"flex",justifyContent:"center",marginBottom:12}}>
+              <div style={{width:160,height:160,background:"#fff",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",padding:8,overflow:"hidden"}}>
+                {qrUrl?<img src={qrUrl} alt="QR Code" style={{width:140,height:140,imageRendering:"pixelated"}}/>
+                :<div style={{fontSize:9,color:"#888"}}>Generating QR...</div>}
+                <div style={{fontSize:5,color:"#0a0e1a",opacity:.4,marginTop:2,fontFamily:"sans-serif"}}>Scan to pair</div>
+              </div>
+            </div>
+            {/* Code */}
+            <div style={{fontSize:9,opacity:.35,letterSpacing:1,marginBottom:4,fontWeight:600}}>PAIRING CODE</div>
+            <div style={{position:"relative",marginBottom:8}}>
+              <div style={{padding:"10px 12px",background:"rgba(0,0,0,.3)",border:"1px solid rgba(46,213,115,.15)",borderRadius:8,fontSize:7,fontFamily:"monospace",color:"#2ED573",wordBreak:"break-all",lineHeight:1.5,maxHeight:50,overflow:"hidden"}}>{code}</div>
+              <button onClick={()=>{try{navigator.clipboard.writeText(code);}catch{}}} style={{position:"absolute",top:4,right:4,...tinyBtn,padding:"3px 8px",background:"rgba(46,213,115,.12)",borderRadius:4,fontSize:8,color:"#2ED573",border:"1px solid rgba(46,213,115,.2)"}}>Copy</button>
+            </div>
+            {pairLink&&<button onClick={()=>{try{navigator.clipboard.writeText(pairLink);}catch{const ta=document.createElement("textarea");ta.value=pairLink;ta.style.cssText="position:fixed;left:-9999px";document.body.appendChild(ta);ta.select();document.execCommand("copy");document.body.removeChild(ta);}}}
+              style={{width:"100%",padding:"10px 0",marginBottom:8,background:"rgba(46,213,115,.08)",border:"1px solid rgba(46,213,115,.2)",borderRadius:8,color:"#2ED573",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"inherit",letterSpacing:1}}>{"\uD83D\uDD17"} Copy Link</button>}
+            <div style={{fontSize:7,opacity:.25,lineHeight:1.5}}>Code expires in 10 minutes. Your other device will auto-receive all your tanks.</div>
+          </>
+        )}
+      </div></>);
+  }
+
+  // Device group exists — manage devices
+  const devices=deviceGroup.devices||[];
+  return(<><div onClick={close} style={{position:"absolute",inset:0,background:"rgba(0,0,0,.6)",zIndex:48}}/>
+    <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:"min(380px, 92vw)",maxHeight:"85vh",background:"var(--modal,rgba(8,14,28,.98))",border:"1px solid rgba(46,213,115,.15)",borderRadius:14,zIndex:50,animation:"fadeIn .2s ease-out",boxShadow:"0 12px 40px rgba(0,0,0,.6)",display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <div style={{padding:"16px 18px 10px",borderBottom:"1px solid var(--brd,rgba(255,255,255,.04))",flexShrink:0}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div><div style={{fontSize:12,fontWeight:700,letterSpacing:2,color:"#2ED573"}}>{"\uD83D\uDD17"} MY DEVICES</div>
+          <div style={{fontSize:10,opacity:.4,marginTop:2}}>{devices.length} device{devices.length!==1?"s":""} paired</div></div>
+          <button onClick={close} style={{...iconBtn,fontSize:14}}>{"\u2715"}</button>
+        </div>
+      </div>
+      <div style={{flex:1,overflow:"auto",padding:"12px 18px 18px"}}>
+        {/* Device list */}
+        <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:14}}>
+          {devices.map(d=>{
+            const isSelf=d.deviceId===DEVICE_ID;
+            const connStatus=peerConnectionStatus?.[d.deviceId];
+            return(<div key={d.deviceId} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",borderRadius:8,background:isSelf?"rgba(46,213,115,.06)":"var(--inp,rgba(255,255,255,.015))",border:`1px solid ${isSelf?"rgba(46,213,115,.12)":"var(--brd2,rgba(255,255,255,.03))"}`}}>
+              <span style={{fontSize:16,flexShrink:0}}>{isSelf?"\uD83D\uDCBB":"\uD83D\uDCF1"}</span>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:10,fontWeight:600,color:"var(--tx,#d0d8e4)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",display:"flex",alignItems:"center",gap:4}}>
+                  {d.deviceName||d.deviceId.slice(0,12)}
+                  {isSelf&&<span style={{fontSize:7,padding:"1px 4px",borderRadius:3,background:"rgba(46,213,115,.15)",border:"1px solid rgba(46,213,115,.25)",color:"#2ED573",fontWeight:700}}>THIS DEVICE</span>}
+                  {!isSelf&&<span style={{fontSize:7,padding:"1px 4px",borderRadius:3,background:connStatus==="connected"?"rgba(77,150,255,.15)":"rgba(255,255,255,.05)",border:`1px solid ${connStatus==="connected"?"rgba(77,150,255,.3)":"rgba(255,255,255,.08)"}`,color:connStatus==="connected"?"#4D96FF":"var(--tx3,#888)",fontWeight:700,letterSpacing:0.5}}>{connStatus==="connected"?"DIRECT":"RELAY"}</span>}
+                </div>
+                <div style={{fontSize:7,opacity:.3,marginTop:1}}>
+                  Paired {d.pairedAt?new Date(d.pairedAt).toLocaleDateString():"unknown"}
+                  {d.lastSeenAt&&!isSelf&&<span>{" \u00B7 "}seen {new Date(d.lastSeenAt).toLocaleDateString()}</span>}
+                </div>
+              </div>
+            </div>);
+          })}
+        </div>
+
+        {/* Add device */}
+        {!showAddDevice&&!code?(
+          <button onClick={doGenerateAddCode}
+            style={{width:"100%",padding:"10px 0",marginBottom:12,background:"rgba(46,213,115,.08)",border:"1px solid rgba(46,213,115,.15)",borderRadius:8,color:"#2ED573",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"inherit",letterSpacing:1}}>+ Add Device</button>
+        ):code?(
+          <>
+            <div style={{fontSize:9,opacity:.35,letterSpacing:1,marginBottom:4,fontWeight:600}}>PAIRING CODE FOR NEW DEVICE</div>
+            <div style={{display:"flex",justifyContent:"center",marginBottom:10}}>
+              <div style={{width:140,height:140,background:"#fff",borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",padding:8,overflow:"hidden"}}>
+                {qrUrl?<img src={qrUrl} alt="QR Code" style={{width:120,height:120,imageRendering:"pixelated"}}/>
+                :<div style={{fontSize:9,color:"#888"}}>Generating...</div>}
+              </div>
+            </div>
+            <div style={{position:"relative",marginBottom:8}}>
+              <div style={{padding:"8px 10px",background:"rgba(0,0,0,.3)",border:"1px solid rgba(46,213,115,.12)",borderRadius:6,fontSize:7,fontFamily:"monospace",color:"#2ED573",wordBreak:"break-all",lineHeight:1.5,maxHeight:40,overflow:"hidden"}}>{code}</div>
+              <button onClick={()=>{try{navigator.clipboard.writeText(code);}catch{}}} style={{position:"absolute",top:3,right:3,...tinyBtn,padding:"2px 6px",background:"rgba(46,213,115,.12)",borderRadius:4,fontSize:7,color:"#2ED573",border:"1px solid rgba(46,213,115,.2)"}}>Copy</button>
+            </div>
+            <div style={{fontSize:7,opacity:.25,marginBottom:12,lineHeight:1.5}}>Open TaskTank on another device, tap Join, and paste or scan this code. Expires in 10 minutes.</div>
+            <button onClick={()=>{setCode("");setQrUrl(null);setShowAddDevice(false);}}
+              style={{width:"100%",padding:"8px 0",background:"var(--inp,rgba(255,255,255,.04))",border:"1px solid var(--brd,rgba(255,255,255,.06))",borderRadius:6,color:"var(--tx2,#8898aa)",fontSize:9,cursor:"pointer",fontFamily:"inherit"}}>Done</button>
+          </>
+        ):null}
+
+        {/* Unpair all */}
+        <button onClick={async()=>{await unpairDevice();close();}}
+          style={{width:"100%",padding:"10px 0",marginTop:14,background:"rgba(255,71,87,.06)",border:"1px solid rgba(255,71,87,.15)",borderRadius:8,color:"#FF4757",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"inherit",letterSpacing:1}}>Unpair All Devices</button>
+        <div style={{fontSize:7,opacity:.2,marginTop:6,lineHeight:1.5,textAlign:"center"}}>Unpairing removes the device group. Per-tank sync keys are preserved.</div>
       </div>
     </div></>);
 }

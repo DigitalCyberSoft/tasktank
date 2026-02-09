@@ -6,6 +6,7 @@
     <title>TaskTank</title>
     <meta name="theme-color" content="#040810" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
     <link rel="apple-touch-icon" href="icons/icon-192.png" />
@@ -23,7 +24,7 @@
           (window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark");
         document.documentElement.dataset.theme=resolved;
         if(resolved==="light"){document.body.style.background="#eef1f6";}
-        if(z&&z!==1){document.documentElement.style.zoom=z;}
+        if(z&&z!==1){var r=document.getElementById("root");if(r){r.style.zoom=z;r.style.width=(100/z)+"vw";r.style.height=(100/z)+"vh";}}
       }catch(e){document.documentElement.dataset.theme="dark";}})();
     </script>
   </head>
