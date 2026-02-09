@@ -169,7 +169,7 @@ export default function TaskTankApp(){
     const creds=await shareTank(tankId);
     const payload={d:DEVICE_ID,t:tankId,n:tank.name,
       p:perm==="readonly"?"r":"s",s:creds.syncId,k:creds.encKey,
-      x:Math.floor((Date.now()+300000)/1000),
+      x:Math.floor((Date.now()+86400000)/1000),
       y:creds.relays||undefined};
     if(recipientName&&recipientName.trim())payload.r=recipientName.trim();
     if(!directConn)payload.w=0;
