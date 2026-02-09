@@ -290,7 +290,7 @@ export default function TaskTankApp(){
   // RENDER
   // ══════════════════════════════════════════════════════════════
   return(
-    <div style={{width:uiZoom!==1?`${100/uiZoom}vw`:"100vw",height:uiZoom!==1?`${100/uiZoom}vh`:"100vh",zoom:uiZoom,background:"var(--bg,#040810)",display:"flex",flexDirection:"column",overflow:"hidden",fontFamily:"'SF Mono','Fira Code','Cascadia Code','Consolas',monospace",color:"var(--tx,#d0d8e4)",userSelect:"none",position:"relative"}}>
+    <div style={{width:uiZoom!==1?`${100/uiZoom}vw`:"100vw",height:uiZoom!==1?`${100/uiZoom}dvh`:"100dvh",zoom:uiZoom,background:"var(--bg,#040810)",display:"flex",flexDirection:"column",overflow:"hidden",fontFamily:"'SF Mono','Fira Code','Cascadia Code','Consolas',monospace",color:"var(--tx,#d0d8e4)",userSelect:"none",position:"relative"}}>
       <style>{`
         [data-theme="dark"]{--bg:#040810;--bar:rgba(5,9,18,.96);--surf:rgba(8,12,24,.97);--card:rgba(6,10,20,.6);--modal:rgba(8,14,28,.98);--inp:rgba(255,255,255,.035);--inp-brd:rgba(255,255,255,.06);--tx:#d0d8e4;--tx2:#8898aa;--tx3:#556;--brd:rgba(255,255,255,.06);--brd2:rgba(255,255,255,.03);--brd3:rgba(255,255,255,.15);--ovl:rgba(0,0,0,.5);--hvr:rgba(255,255,255,.04);--w1:#081422;--w2:#0a1c30;--w3:#0d2438;--ws1:#0a1118;--ws2:#101a24;--ws3:#132028;--wsurf:rgba(70,160,255,.03);--wbot:rgba(2,4,8,.55);--wsea1:#1a4a3a;--wsea2:#1d6a4a22;--fish-text:rgba(255,255,255,.6);color-scheme:dark}
         [data-theme="light"]{--bg:#eef1f6;--bar:rgba(235,238,244,.96);--surf:rgba(255,255,255,.97);--card:rgba(255,255,255,.7);--modal:rgba(248,250,254,.98);--inp:rgba(0,0,0,.04);--inp-brd:rgba(0,0,0,.08);--tx:#1a1e2c;--tx2:#5a6578;--tx3:#889;--brd:rgba(0,0,0,.08);--brd2:rgba(0,0,0,.04);--brd3:rgba(0,0,0,.15);--ovl:rgba(0,0,0,.4);--hvr:rgba(0,0,0,.04);--w1:#1a8aaa;--w2:#1580a0;--w3:#107090;--ws1:#157a96;--ws2:#106a86;--ws3:#0c5a76;--wsurf:rgba(70,160,255,.06);--wbot:rgba(2,4,8,.2);--wsea1:#1a8a5a;--wsea2:#2aaa6a44;--fish-text:rgba(0,0,0,.7);color-scheme:light}
@@ -401,7 +401,7 @@ export default function TaskTankApp(){
       )}
       {/* ── Readonly mobile nav (no input, just nav dots + label) ── */}
       {showSingle&&tanks.length>0&&isReadonly&&(
-        <div style={{background:"var(--bar,rgba(5,9,18,.96))",borderTop:"1px solid var(--brd2,rgba(255,255,255,.03))",padding:"8px 12px",flexShrink:0,zIndex:15,textAlign:"center"}}>
+        <div style={{background:"var(--bar,rgba(5,9,18,.96))",borderTop:"1px solid var(--brd2,rgba(255,255,255,.03))",padding:"8px 12px calc(8px + env(safe-area-inset-bottom, 0px))",flexShrink:0,zIndex:15,textAlign:"center"}}>
           <div style={{fontSize:9,color:"#4D96FF",fontWeight:700,letterSpacing:2,marginBottom:4}}>VIEW ONLY</div>
           {tanks.length>1&&<div style={{display:"flex",gap:4,justifyContent:"center"}}>
             {tanks.map(t=>(<div key={t.id} onClick={()=>setActiveId(t.id)} style={{width:t.id===activeId?10:6,height:6,borderRadius:3,cursor:"pointer",background:t.id===activeId?"#4D96FF":"var(--brd3,rgba(255,255,255,.12))",transition:"all .2s"}}/>))}

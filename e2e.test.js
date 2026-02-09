@@ -229,7 +229,80 @@ async function openJoinAndPaste(page, code) {
   await new Promise(r => setTimeout(r, 1000));
 }
 
+// ── Common mobile devices ──
+const MOBILE_VIEWPORTS = [
+  { name: "iPhone SE", width: 375, height: 667 },
+  { name: "iPhone 14", width: 390, height: 844 },
+  { name: "Pixel 7", width: 412, height: 915 },
+  { name: "Galaxy S21", width: 360, height: 800 },
+  { name: "iPad Mini", width: 768, height: 1024 },
+];
+
 // ── Tests ──
+
+describe("E2E — Mobile viewport layout", () => {
+  for (const vp of MOBILE_VIEWPORTS) {
+    it(`bottom controls visible at ${vp.name} (${vp.width}x${vp.height})`, async () => {
+      if (!browser) return;
+      const ctx = await browser.createBrowserContext();
+      const page = await ctx.newPage();
+
+      try {
+        await page.setViewport({ width: vp.width, height: vp.height, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+        await waitForApp(page);
+        await createTank(page, "Mobile Test");
+        await new Promise(r => setTimeout(r, 500));
+
+        // Measure the app root container and the bottom bar
+        const layout = await page.evaluate(() => {
+          const root = document.querySelector("#root > div");
+          if (!root) return null;
+          const rootRect = root.getBoundingClientRect();
+
+          // Find the bottom bar (MobileInputBar or DesktopInputBar) — it's the last div with borderTop
+          const children = [...root.children].filter(el => el.tagName === "DIV" || el.tagName === "div");
+          let bottomBar = null;
+          for (const child of children) {
+            const s = child.style || getComputedStyle(child);
+            if (s.borderTop && s.borderTop.includes("solid")) {
+              bottomBar = child;
+            }
+          }
+
+          // Also check for any input element in bottom area
+          const inputs = [...document.querySelectorAll("input")];
+          const addInput = inputs.find(i => i.placeholder && (i.placeholder.includes("Add to") || i.placeholder.includes("Add fish")));
+
+          return {
+            rootHeight: rootRect.height,
+            rootBottom: rootRect.bottom,
+            viewportHeight: window.innerHeight,
+            bottomBarRect: bottomBar ? bottomBar.getBoundingClientRect() : null,
+            addInputRect: addInput ? addInput.getBoundingClientRect() : null,
+          };
+        });
+
+        expect(layout, "App root should exist").toBeTruthy();
+
+        // Root should not exceed viewport
+        expect(layout.rootBottom).toBeLessThanOrEqual(layout.viewportHeight + 1);
+
+        // The add-fish input should be visible (within viewport)
+        if (layout.addInputRect) {
+          expect(layout.addInputRect.bottom, `Input bar bottom (${layout.addInputRect.bottom}) should be within viewport (${layout.viewportHeight})`).toBeLessThanOrEqual(layout.viewportHeight);
+          expect(layout.addInputRect.top).toBeGreaterThan(0);
+        }
+
+        // Bottom bar bottom edge should be within viewport
+        if (layout.bottomBarRect) {
+          expect(layout.bottomBarRect.bottom, `Bottom bar (${layout.bottomBarRect.bottom}) should be within viewport (${layout.viewportHeight})`).toBeLessThanOrEqual(layout.viewportHeight + 1);
+        }
+      } finally {
+        await ctx.close();
+      }
+    }, 30000);
+  }
+});
 
 describe("E2E — Two-tab Nostr sync", () => {
   beforeAll(async () => {

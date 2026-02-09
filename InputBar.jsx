@@ -28,7 +28,7 @@ export function DesktopInputBar({ input, setInput, addFish, actTank, newImp, set
 
 export function MobileInputBar({ input, setInput, addFish, actTank, newImp, setNewImp, newDur, setNewDur, newDue, setNewDue, setBulkModal, tanks, activeId, setActiveId, navTank }) {
   return(
-    <div style={{background:"var(--bar,rgba(5,9,18,.96))",borderTop:"1px solid var(--brd2,rgba(255,255,255,.03))",padding:"6px 10px 8px",flexShrink:0,zIndex:15}}>
+    <div style={{background:"var(--bar,rgba(5,9,18,.96))",borderTop:"1px solid var(--brd2,rgba(255,255,255,.03))",padding:"6px 10px calc(8px + env(safe-area-inset-bottom, 0px))",flexShrink:0,zIndex:15}}>
       <div style={{display:"flex",gap:6,marginBottom:4}}>
         <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addFish()}
           placeholder={actTank?`Add to ${actTank.name}\u2026`:"Select a tank\u2026"}
