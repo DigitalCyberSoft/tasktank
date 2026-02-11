@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskTank — Your tasks are fish</title>
+<meta name="description" content="A visual task manager where tasks swim as fish. Organize with boards. Sync across devices with end-to-end encryption. No accounts required.">
+<link rel="icon" href="demo/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="demo/favicon.ico" sizes="32x32">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep: #040810;
+    --glass: rgba(77, 150, 255, .06);
+    --glass-border: rgba(77, 150, 255, .12);
+    --blue: #4D96FF;
+    --blue-glow: rgba(77, 150, 255, .3);
+    --cyan: #5ecfcf;
+    --coral: #ff6b81;
+    --sand: #d0d8e4;
+    --kelp: #2a7a5a;
+    --muted: #3a4a68;
+    --card-bg: rgba(10, 18, 40, .5);
+    --card-border: rgba(77, 150, 255, .08);
+    --ocean1: rgba(14, 40, 78, .8);
+    --ocean2: rgba(30, 80, 120, .3);
+    --ocean3: rgba(20, 60, 100, .2);
+    --caustic1: rgba(77, 150, 255, .6);
+    --caustic2: rgba(94, 207, 207, .4);
+    --particle-bg: rgba(77, 150, 255, .25);
+    --footer-border: rgba(255, 255, 255, .03);
+    --frame-bg: linear-gradient(160deg, #141a2e, #0c1020);
+    --frame-border: rgba(255, 255, 255, .06);
+    --toolbar-bg: rgba(8, 12, 24, .8);
+    --toolbar-border: rgba(255, 255, 255, .04);
+    --url-color: rgba(255, 255, 255, .15);
+    --viewport-bg: #0a1628;
+    --stand-top: rgba(20, 26, 46, .8);
+    --stand-bot: rgba(12, 16, 32, .6);
+    --stand-base-top: rgba(20, 26, 46, .6);
+    --stand-base-bot: rgba(12, 16, 32, .3);
+    --stand-border: rgba(255, 255, 255, .03);
+    --frame-shadow: 0 20px 60px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .03), 0 0 80px rgba(77, 150, 255, .05);
+    color-scheme: dark;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --deep: #f0f2f8; --sand: #1a1e2c; --muted: #6a7a96;
+      --glass: rgba(77, 150, 255, .08); --glass-border: rgba(77, 150, 255, .18);
+      --card-bg: rgba(255, 255, 255, .5); --card-border: rgba(77, 150, 255, .12);
+      --ocean1: rgba(180, 210, 240, .5); --ocean2: rgba(160, 200, 230, .3); --ocean3: rgba(170, 205, 235, .2);
+      --caustic1: rgba(77, 150, 255, .15); --caustic2: rgba(94, 207, 207, .1);
+      --particle-bg: rgba(77, 150, 255, .15); --footer-border: rgba(0, 0, 0, .06);
+      --frame-bg: linear-gradient(160deg, #d8dce8, #c8ccd8); --frame-border: rgba(0, 0, 0, .1);
+      --toolbar-bg: rgba(200, 206, 218, .95); --toolbar-border: rgba(0, 0, 0, .06);
+      --url-color: rgba(0, 0, 0, .25); --viewport-bg: #e8ecf4;
+      --stand-top: rgba(200, 206, 218, .8); --stand-bot: rgba(180, 186, 198, .6);
+      --stand-base-top: rgba(200, 206, 218, .6); --stand-base-bot: rgba(180, 186, 198, .3);
+      --stand-border: rgba(0, 0, 0, .06);
+      --frame-shadow: 0 20px 60px rgba(0, 0, 0, .08), 0 0 0 1px rgba(0, 0, 0, .05);
+      color-scheme: light;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --deep: #040810; --sand: #d0d8e4; --muted: #3a4a68;
+    --glass: rgba(77, 150, 255, .06); --glass-border: rgba(77, 150, 255, .12);
+    --card-bg: rgba(10, 18, 40, .5); --card-border: rgba(77, 150, 255, .08);
+    --ocean1: rgba(14, 40, 78, .8); --ocean2: rgba(30, 80, 120, .3); --ocean3: rgba(20, 60, 100, .2);
+    --caustic1: rgba(77, 150, 255, .6); --caustic2: rgba(94, 207, 207, .4);
+    --particle-bg: rgba(77, 150, 255, .25); --footer-border: rgba(255, 255, 255, .03);
+    --frame-bg: linear-gradient(160deg, #141a2e, #0c1020); --frame-border: rgba(255, 255, 255, .06);
+    --toolbar-bg: rgba(8, 12, 24, .8); --toolbar-border: rgba(255, 255, 255, .04);
+    --url-color: rgba(255, 255, 255, .15); --viewport-bg: #0a1628;
+    --stand-top: rgba(20, 26, 46, .8); --stand-bot: rgba(12, 16, 32, .6);
+    --stand-base-top: rgba(20, 26, 46, .6); --stand-base-bot: rgba(12, 16, 32, .3);
+    --stand-border: rgba(255, 255, 255, .03);
+    --frame-shadow: 0 20px 60px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .03), 0 0 80px rgba(77, 150, 255, .05);
+    color-scheme: dark;
+  }
+
+  :root[data-theme="light"] {
+    --deep: #f0f2f8; --sand: #1a1e2c; --muted: #6a7a96;
+    --glass: rgba(77, 150, 255, .08); --glass-border: rgba(77, 150, 255, .18);
+    --card-bg: rgba(255, 255, 255, .5); --card-border: rgba(77, 150, 255, .12);
+    --ocean1: rgba(180, 210, 240, .5); --ocean2: rgba(160, 200, 230, .3); --ocean3: rgba(170, 205, 235, .2);
+    --caustic1: rgba(77, 150, 255, .15); --caustic2: rgba(94, 207, 207, .1);
+    --particle-bg: rgba(77, 150, 255, .15); --footer-border: rgba(0, 0, 0, .06);
+    --frame-bg: linear-gradient(160deg, #d8dce8, #c8ccd8); --frame-border: rgba(0, 0, 0, .1);
+    --toolbar-bg: rgba(200, 206, 218, .95); --toolbar-border: rgba(0, 0, 0, .06);
+    --url-color: rgba(0, 0, 0, .25); --viewport-bg: #e8ecf4;
+    --stand-top: rgba(200, 206, 218, .8); --stand-bot: rgba(180, 186, 198, .6);
+    --stand-base-top: rgba(200, 206, 218, .6); --stand-base-bot: rgba(180, 186, 198, .3);
+    --stand-border: rgba(0, 0, 0, .06);
+    --frame-shadow: 0 20px 60px rgba(0, 0, 0, .08), 0 0 0 1px rgba(0, 0, 0, .05);
+    color-scheme: light;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--deep);
+    color: var(--sand);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background .3s, color .3s;
+  }
+
+  /* ── Ocean background ── */
+  .ocean-bg {
+    position: fixed; inset: 0; z-index: -1;
+    background:
+      radial-gradient(ellipse 120% 60% at 50% 0%, var(--ocean1) 0%, transparent 70%),
+      radial-gradient(ellipse 80% 50% at 20% 80%, var(--ocean2) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 60%, var(--ocean3) 0%, transparent 50%),
+      var(--deep);
+    transition: background .3s;
+  }
+  .caustics {
+    position: fixed; inset: 0; z-index: -1; opacity: .03;
+    background:
+      repeating-conic-gradient(from 0deg at 50% 50%, transparent 0deg, var(--caustic1) 1deg, transparent 2deg) 0 0 / 200px 200px,
+      repeating-conic-gradient(from 45deg at 30% 70%, transparent 0deg, var(--caustic2) 1deg, transparent 3deg) 50px 30px / 180px 180px;
+    animation: causticShift 20s ease-in-out infinite alternate;
+  }
+  @keyframes causticShift {
+    0% { transform: scale(1) rotate(0deg); opacity: .03; }
+    50% { transform: scale(1.1) rotate(2deg); opacity: .05; }
+    100% { transform: scale(1) rotate(-1deg); opacity: .03; }
+  }
+  .particles { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+  .particle {
+    position: absolute; width: 3px; height: 3px; border-radius: 50%;
+    background: var(--particle-bg); animation: drift linear infinite;
+  }
+  @keyframes drift {
+    0% { transform: translateY(110vh) translateX(0); opacity: 0; }
+    10% { opacity: 1; } 90% { opacity: 1; }
+    100% { transform: translateY(-10vh) translateX(40px); opacity: 0; }
+  }
+
+  /* ── Theme toggle ── */
+  .theme-toggle {
+    position: fixed; top: 16px; right: 16px; z-index: 100;
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid var(--glass-border); background: var(--glass);
+    color: var(--muted); font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .3s ease; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .theme-toggle:hover { background: var(--glass-border); color: var(--blue); transform: scale(1.1); }
+
+  /* ── Hero ── */
+  .hero {
+    text-align: center; padding: 100px 24px 60px;
+    position: relative; max-width: 720px; margin: 0 auto;
+  }
+  .hero-fish {
+    font-size: 56px; display: inline-block;
+    animation: heroSwim 4s ease-in-out infinite;
+    filter: drop-shadow(0 0 24px rgba(77, 150, 255, .3));
+    margin-bottom: 20px;
+  }
+  @keyframes heroSwim {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    25% { transform: translateX(10px) rotate(3deg); }
+    75% { transform: translateX(-10px) rotate(-3deg); }
+  }
+  .hero h1 {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(36px, 7vw, 64px); font-weight: 500; letter-spacing: 14px;
+    color: var(--blue);
+    text-shadow: 0 0 60px rgba(77, 150, 255, .4), 0 0 120px rgba(77, 150, 255, .1);
+    margin-bottom: 16px;
+  }
+  .hero p {
+    font-size: clamp(15px, 2.2vw, 18px); font-weight: 300; color: var(--muted);
+    max-width: 520px; margin: 0 auto 36px; line-height: 1.7;
+  }
+  .hero-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px; padding: 13px 30px;
+    background: linear-gradient(135deg, var(--blue), #3a7de8); border: none; border-radius: 40px;
+    color: #fff; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600;
+    letter-spacing: 1px; text-decoration: none; cursor: pointer; transition: all .3s ease;
+    box-shadow: 0 4px 24px rgba(77, 150, 255, .3), inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 40px rgba(77, 150, 255, .4), inset 0 1px 0 rgba(255,255,255,.2); }
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 8px; padding: 13px 30px;
+    background: var(--glass); border: 1px solid var(--glass-border); border-radius: 40px;
+    color: var(--sand); font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 500;
+    letter-spacing: 1px; text-decoration: none; cursor: pointer; transition: all .3s ease;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .btn-secondary:hover { transform: translateY(-2px); background: var(--glass-border); }
+  .btn-secondary svg, .btn-primary svg { width: 16px; height: 16px; }
+
+  /* ── Feature pills ── */
+  .pills { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; padding: 0 24px; margin-bottom: 80px; }
+  .pill {
+    display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px;
+    border: 1px solid var(--glass-border); background: var(--glass);
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px; color: var(--muted);
+  }
+  .pill .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .pill .dot.blue { background: var(--blue); }
+  .pill .dot.cyan { background: var(--cyan); }
+  .pill .dot.coral { background: var(--coral); }
+  .pill .dot.green { background: var(--kelp); }
+  .pill .dot.gold { background: #e8a838; }
+
+  /* ── Sections ── */
+  .content { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  .section { margin-bottom: 96px; position: relative; }
+  .section::after {
+    content: ''; position: absolute; bottom: -48px; left: 10%; right: 10%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(77, 150, 255, .12), transparent);
+  }
+  .section:last-child::after { display: none; }
+  .section-label { text-align: center; margin-bottom: 40px; }
+  .section-label h2 {
+    font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 400;
+    letter-spacing: 4px; color: var(--blue); opacity: .6; margin-bottom: 8px; text-transform: uppercase;
+  }
+  .section-label .divider {
+    width: 40px; height: 1px; margin: 0 auto; opacity: .4;
+    background: linear-gradient(90deg, transparent, var(--blue), transparent);
+  }
+
+  /* ── How It Works ── */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .step {
+    background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px;
+    padding: 28px 24px; text-align: center; transition: transform .3s, border-color .3s;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .step:hover { transform: translateY(-4px); border-color: var(--glass-border); }
+  .step-icon { font-size: 32px; margin-bottom: 16px; display: block; }
+  .step h3 {
+    font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500;
+    letter-spacing: 2px; color: var(--blue); margin-bottom: 10px; text-transform: uppercase;
+  }
+  .step p { font-size: 13px; color: var(--muted); line-height: 1.6; font-weight: 300; }
+
+  /* ── Architecture ── */
+  .arch-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 28px; }
+  .arch-card {
+    background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px;
+    padding: 24px; transition: transform .3s, border-color .3s;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .arch-card:hover { transform: translateY(-3px); border-color: var(--glass-border); }
+  .arch-card h3 {
+    font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
+    letter-spacing: 2px; color: var(--blue); margin-bottom: 8px; text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .arch-card h3 span { font-size: 16px; }
+  .arch-card p { font-size: 13px; color: var(--muted); line-height: 1.6; font-weight: 300; }
+
+  .arch-detail {
+    background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px;
+    padding: 24px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .arch-detail h3 {
+    font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
+    letter-spacing: 2px; color: var(--blue); margin-bottom: 12px; text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .arch-detail h3 span { font-size: 16px; }
+  .tech-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tech-tag {
+    padding: 4px 12px; border-radius: 12px; font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 1px; color: var(--muted);
+    border: 1px solid var(--card-border); background: rgba(77, 150, 255, .03);
+  }
+
+  /* ── Platforms ── */
+  .platforms { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .platform {
+    background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px;
+    padding: 28px 24px; text-align: center; transition: transform .3s, border-color .3s;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .platform:hover { transform: translateY(-4px); border-color: var(--glass-border); }
+  .platform-icon { font-size: 28px; margin-bottom: 14px; display: block; }
+  .platform h3 {
+    font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500;
+    letter-spacing: 2px; color: var(--blue); margin-bottom: 8px; text-transform: uppercase;
+  }
+  .platform p { font-size: 12px; color: var(--muted); line-height: 1.5; font-weight: 300; }
+
+  /* ── Screenshots ── */
+  .screenshots-row { display: flex; gap: 32px; justify-content: center; align-items: flex-end; flex-wrap: wrap; margin-bottom: 24px; }
+  .screenshots-row .device { flex-shrink: 0; }
+  .frame-desktop {
+    width: 440px; max-width: 85vw; background: var(--frame-bg); border-radius: 14px;
+    border: 1.5px solid var(--frame-border); overflow: hidden; box-shadow: var(--frame-shadow);
+    transition: background .3s, border-color .3s, box-shadow .3s;
+  }
+  .frame-desktop .toolbar {
+    height: 32px; background: var(--toolbar-bg); display: flex; align-items: center;
+    padding: 0 12px; gap: 6px; border-bottom: 1px solid var(--toolbar-border);
+  }
+  .frame-desktop .toolbar .dot { width: 10px; height: 10px; border-radius: 50%; opacity: .7; }
+  .frame-desktop .toolbar .dot:nth-child(1) { background: #ff5f57; }
+  .frame-desktop .toolbar .dot:nth-child(2) { background: #febc2e; }
+  .frame-desktop .toolbar .dot:nth-child(3) { background: #28c840; }
+  .frame-desktop .toolbar .url {
+    flex: 1; text-align: center; font-family: 'DM Mono', monospace;
+    font-size: 9px; color: var(--url-color); letter-spacing: 1px;
+  }
+  .frame-desktop .viewport { line-height: 0; background: var(--viewport-bg); }
+  .frame-desktop .viewport img { width: 100%; height: auto; display: block; }
+  .stand-arm {
+    width: 80px; height: 32px; margin: 0 auto;
+    background: linear-gradient(180deg, var(--stand-top), var(--stand-bot));
+    border-left: 1px solid var(--stand-border); border-right: 1px solid var(--stand-border);
+  }
+  .stand-base {
+    width: 160px; height: 8px; margin: 0 auto; border-radius: 0 0 12px 12px;
+    background: linear-gradient(180deg, var(--stand-base-top), var(--stand-base-bot));
+    border: 1px solid var(--stand-border); border-top: none;
+  }
+  .screenshots-link {
+    text-align: center; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px;
+  }
+  .screenshots-link a { color: var(--blue); text-decoration: none; opacity: .6; transition: opacity .2s; }
+  .screenshots-link a:hover { opacity: 1; }
+
+  /* ── Footer ── */
+  .footer { text-align: center; padding: 40px 24px 48px; border-top: 1px solid var(--footer-border); margin-top: 48px; }
+  .footer-links {
+    display: flex; justify-content: center; gap: 24px; margin-bottom: 16px;
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 2px;
+  }
+  .footer-links a { color: var(--blue); text-decoration: none; opacity: .5; transition: opacity .2s; }
+  .footer-links a:hover { opacity: 1; }
+  .footer p {
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px;
+    color: var(--muted); opacity: .4;
+  }
+
+  /* ── Scroll reveal ── */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .hero { padding: 70px 16px 40px; }
+    .hero h1 { letter-spacing: 8px; }
+    .steps { grid-template-columns: 1fr; }
+    .arch-grid { grid-template-columns: 1fr; }
+    .platforms { grid-template-columns: 1fr; }
+    .pills { gap: 6px; }
+    .pill { font-size: 9px; padding: 5px 10px; }
+    .screenshots-row { gap: 20px; }
+    .frame-desktop { width: 100%; }
+  }
+  @media (max-width: 480px) {
+    .hero-buttons { flex-direction: column; align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ocean-bg"></div>
+<div class="caustics"></div>
+<div class="particles" id="particles"></div>
+
+<button class="theme-toggle" id="themeToggle" title="Toggle theme">&#x263E;</button>
+
+<!-- ── Hero ── -->
+<header class="hero">
+  <div class="hero-fish">&#x1F420;</div>
+  <h1>TASKTANK</h1>
+  <p>A visual task manager where your tasks are fish. Watch them swim, organize with boards, sync across devices &mdash; encrypted end-to-end, no accounts required.</p>
+  <div class="hero-buttons">
+    <a href="demo/" class="btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      Try the Demo
+    </a>
+    <a href="https://github.com/DigitalCyberSoft/tasktank" class="btn-secondary" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.009-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+      View on GitHub
+    </a>
+  </div>
+</header>
+
+<!-- ── Feature pills ── -->
+<div class="pills">
+  <div class="pill"><span class="dot blue"></span> Aquarium Visuals</div>
+  <div class="pill"><span class="dot cyan"></span> Trello Boards</div>
+  <div class="pill"><span class="dot coral"></span> E2E Encrypted</div>
+  <div class="pill"><span class="dot green"></span> P2P Sync</div>
+  <div class="pill"><span class="dot gold"></span> PWA + Desktop</div>
+  <div class="pill"><span class="dot blue"></span> File Attachments</div>
+</div>
+
+<div class="content">
+
+  <!-- ── How It Works ── -->
+  <div class="section reveal">
+    <div class="section-label"><h2>How It Works</h2><div class="divider"></div></div>
+    <div class="steps">
+      <div class="step">
+        <span class="step-icon">&#x1F41F;</span>
+        <h3>Add Tasks as Fish</h3>
+        <p>Type a task and it becomes a fish swimming in your tank. Set importance, timers, and due dates. Watch your workload come alive.</p>
+      </div>
+      <div class="step">
+        <span class="step-icon">&#x1F4CB;</span>
+        <h3>Organize with Boards</h3>
+        <p>Switch to Trello-style board view to drag tasks between columns. Same data, different lens. Use whatever fits your flow.</p>
+      </div>
+      <div class="step">
+        <span class="step-icon">&#x1F3A3;</span>
+        <h3>Catch to Complete</h3>
+        <p>Click a fish to catch it. Review details, add notes, attach files. Mark it done and watch it swim away.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Architecture ── -->
+  <div class="section reveal">
+    <div class="section-label"><h2>Architecture</h2><div class="divider"></div></div>
+    <div class="arch-grid">
+      <div class="arch-card">
+        <h3><span>&#x1F510;</span> Zero-Knowledge Sync</h3>
+        <p>All data is encrypted with AES-GCM 256-bit before leaving your device. Relay servers see only ciphertext. No accounts, no sign-ups &mdash; just a share code that contains the encryption key.</p>
+      </div>
+      <div class="arch-card">
+        <h3><span>&#x26A1;</span> Dual-Path Sync</h3>
+        <p>WebRTC for instant peer-to-peer sync on the same network. Nostr relays (NIP-78) as a persistent fallback when peers are offline. Both paths are encrypted identically.</p>
+      </div>
+      <div class="arch-card">
+        <h3><span>&#x1F4F1;</span> Device Pairing</h3>
+        <p>Scan a QR code to pair your devices. All tanks auto-sync to paired devices. Pairing creates a persistent encrypted channel &mdash; no repeated share codes needed.</p>
+      </div>
+      <div class="arch-card">
+        <h3><span>&#x1F517;</span> Share Codes</h3>
+        <p>Encrypted invite codes bundle sync ID + encryption key + relay list. The relay never gets the key &mdash; only people with the code can decrypt your tasks.</p>
+      </div>
+    </div>
+    <div class="arch-detail">
+      <h3><span>&#x2699;</span> Under the Hood</h3>
+      <div class="tech-tags">
+        <span class="tech-tag">AES-GCM 256-bit</span>
+        <span class="tech-tag">Web Crypto API</span>
+        <span class="tech-tag">SHA-256 Key Derivation</span>
+        <span class="tech-tag">secp256k1 Nostr Keypairs</span>
+        <span class="tech-tag">Ephemeral Signaling (kind 20078)</span>
+        <span class="tech-tag">STUN NAT Traversal</span>
+        <span class="tech-tag">BroadcastChannel Tab Sync</span>
+        <span class="tech-tag">IndexedDB File Store</span>
+        <span class="tech-tag">Chunked WebRTC Transfer</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Platforms ── -->
+  <div class="section reveal">
+    <div class="section-label"><h2>Platforms</h2><div class="divider"></div></div>
+    <div class="platforms">
+      <div class="platform">
+        <span class="platform-icon">&#x1F310;</span>
+        <h3>Web (PWA)</h3>
+        <p>Install from any browser. Works offline with service worker caching. Full-featured on desktop and mobile.</p>
+      </div>
+      <div class="platform">
+        <span class="platform-icon">&#x1F5A5;</span>
+        <h3>Desktop</h3>
+        <p>Native builds via Tauri v2. Linux (.deb, .AppImage, .rpm), macOS, and Windows. Lightweight, no Electron.</p>
+      </div>
+      <div class="platform">
+        <span class="platform-icon">&#x1F4F2;</span>
+        <h3>Mobile</h3>
+        <p>Add to home screen on iOS and Android. Responsive design adapts from phone to tablet. Full PWA experience.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Screenshots ── -->
+  <div class="section reveal">
+    <div class="section-label"><h2>Screenshots</h2><div class="divider"></div></div>
+    <div class="screenshots-row">
+      <div class="device">
+        <div class="frame-desktop">
+          <div class="toolbar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">tasktank</div></div>
+          <div class="viewport"><img id="shot-tank" alt="Aquarium view"></div>
+        </div>
+        <div class="stand-arm"></div><div class="stand-base"></div>
+      </div>
+      <div class="device">
+        <div class="frame-desktop">
+          <div class="toolbar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">tasktank</div></div>
+          <div class="viewport"><img id="shot-board" alt="Board view"></div>
+        </div>
+        <div class="stand-arm"></div><div class="stand-base"></div>
+      </div>
+    </div>
+    <div class="screenshots-link">
+      <a href="screenshots/">View all screenshots &#x2192;</a>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Footer ── -->
+<footer class="footer">
+  <div class="footer-links">
+    <a href="demo/">Demo</a>
+    <a href="https://github.com/DigitalCyberSoft/tasktank" target="_blank" rel="noopener">GitHub</a>
+    <a href="screenshots/">Screenshots</a>
+  </div>
+  <p>TaskTank &mdash; your tasks are fish</p>
+</footer>
+
+<script>
+// ── PWA standalone redirect ──
+if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) {
+  window.location.replace('demo/');
+}
+
+// ── Theme ──
+function getTheme() {
+  var forced = document.documentElement.dataset.theme;
+  if (forced) return forced;
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
+function updateTheme() {
+  var theme = getTheme();
+  document.getElementById('themeToggle').textContent = theme === 'dark' ? '\u263E' : '\u2600';
+  document.getElementById('shot-tank').src = 'screenshots/' + theme + '-desktop-tank.png';
+  document.getElementById('shot-board').src = 'screenshots/' + theme + '-desktop-board.png';
+}
+
+window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function() {
+  if (!document.documentElement.dataset.theme) updateTheme();
+});
+
+document.getElementById('themeToggle').addEventListener('click', function() {
+  var current = getTheme();
+  var next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  updateTheme();
+});
+
+updateTheme();
+
+// Preload opposite theme screenshots
+(function() {
+  var other = getTheme() === 'dark' ? 'light' : 'dark';
+  ['desktop-tank', 'desktop-board'].forEach(function(name) {
+    var img = new Image();
+    img.src = 'screenshots/' + other + '-' + name + '.png';
+  });
+})();
+
+// ── Floating particles ──
+(function() {
+  var container = document.getElementById('particles');
+  for (var i = 0; i < 24; i++) {
+    var p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDuration = (12 + Math.random() * 20) + 's';
+    p.style.animationDelay = -(Math.random() * 30) + 's';
+    p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+    p.style.opacity = (.1 + Math.random() * .25);
+    container.appendChild(p);
+  }
+})();
+
+// ── Scroll reveal ──
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) entry.target.classList.add('visible');
+  });
+}, { threshold: .1 });
+
+document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el); });
+</script>
+</body>
+</html>

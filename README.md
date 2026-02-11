@@ -2,9 +2,9 @@
 
 A visual task manager where your tasks are fish swimming in a tank. Add tasks, watch them swim, and catch them when done.
 
-**[Try it live](https://digitalcybersoft.github.io/tasktank/)**
+**[Website](https://digitalcybersoft.github.io/tasktank/)** | **[Try the Demo](https://digitalcybersoft.github.io/tasktank/demo/)**
 
-[![TaskTank — aquarium view](public/screenshots/dark-desktop-tank.png)](https://digitalcybersoft.github.io/tasktank/screenshots/)
+[![TaskTank — aquarium view](public/screenshots/dark-desktop-tank.png)](https://digitalcybersoft.github.io/tasktank/demo/)
 
 ## Features
 

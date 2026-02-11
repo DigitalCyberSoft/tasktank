@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
-const base = process.env.GITHUB_ACTIONS ? "/tasktank/" : "/";
+const base = process.env.GITHUB_ACTIONS ? "/tasktank/demo/" : "/";
 
 export default defineConfig({
   base,
