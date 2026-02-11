@@ -4,7 +4,7 @@ A visual task manager where your tasks are fish swimming in a tank. Add tasks, w
 
 **[Try it live](https://digitalcybersoft.github.io/tasktank/)**
 
-[![TaskTank — aquarium view](public/screenshots/desktop-tank.png)](https://digitalcybersoft.github.io/tasktank/screenshots/)
+[![TaskTank — aquarium view](public/screenshots/dark-desktop-tank.png)](https://digitalcybersoft.github.io/tasktank/screenshots/)
 
 ## Features
 

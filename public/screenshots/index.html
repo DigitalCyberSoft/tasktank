@@ -4,265 +4,573 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TaskTank — Screenshots</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{background:#0a0e1a;color:#d0d8e4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh}
-  .hero{text-align:center;padding:60px 20px 40px}
-  .hero h1{font-size:clamp(28px,5vw,48px);font-weight:800;letter-spacing:6px;color:#4D96FF;margin-bottom:8px}
-  .hero p{font-size:clamp(13px,2vw,16px);color:#7888a0;max-width:500px;margin:0 auto}
-  .tabs{display:flex;justify-content:center;gap:4px;padding:0 20px;margin-bottom:40px;flex-wrap:wrap}
-  .tab{padding:8px 20px;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:#7888a0;cursor:pointer;font-size:13px;font-weight:600;letter-spacing:1px;transition:all .2s}
-  .tab:hover{background:rgba(77,150,255,.08);color:#7bb8ff}
-  .tab.active{background:rgba(77,150,255,.15);color:#4D96FF;border-color:rgba(77,150,255,.3)}
-  .showcase{max-width:1200px;margin:0 auto;padding:0 20px 80px}
-  .row{display:none;gap:32px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
-  .row.active{display:flex}
-  /* Device frames */
-  .device{position:relative;flex-shrink:0}
-  .device-label{text-align:center;font-size:10px;letter-spacing:2px;color:#556;font-weight:700;margin-bottom:12px;text-transform:uppercase}
-  /* Desktop frame */
-  .desktop-frame{background:#1a1e2e;border-radius:12px;border:2px solid #2a2e3e;padding:8px;position:relative;width:640px;max-width:90vw}
-  .desktop-frame .titlebar{height:22px;background:#12151f;border-radius:6px 6px 0 0;display:flex;align-items:center;padding:0 10px;gap:6px;margin-bottom:2px}
-  .desktop-frame .dot{width:8px;height:8px;border-radius:50%}
-  .desktop-frame .dot.r{background:#ff5f57}.desktop-frame .dot.y{background:#febc2e}.desktop-frame .dot.g{background:#28c840}
-  .desktop-frame .screen{border-radius:0 0 6px 6px;overflow:hidden;background:#000;line-height:0}
-  .desktop-frame .screen img{width:100%;height:auto;display:block}
-  .desktop-frame .stand{width:120px;height:24px;background:linear-gradient(#2a2e3e,#1a1e2e);margin:0 auto;border-radius:0 0 4px 4px}
-  .desktop-frame .base{width:180px;height:6px;background:#2a2e3e;margin:0 auto;border-radius:0 0 8px 8px}
-  /* Phone frame */
-  .phone-frame{background:#1a1e2e;border-radius:32px;border:3px solid #2a2e3e;padding:12px 8px;width:210px}
-  .phone-frame .notch{width:60px;height:6px;background:#12151f;border-radius:3px;margin:0 auto 8px}
-  .phone-frame .screen{border-radius:18px;overflow:hidden;background:#000;line-height:0}
-  .phone-frame .screen img{width:100%;height:auto;display:block}
-  .phone-frame .home{width:40px;height:4px;background:#2a2e3e;border-radius:2px;margin:10px auto 0}
-  /* Tablet frame */
-  .tablet-frame{background:#1a1e2e;border-radius:18px;border:3px solid #2a2e3e;padding:14px 10px;width:400px;max-width:85vw}
-  .tablet-frame .cam{width:6px;height:6px;background:#12151f;border-radius:50%;margin:0 auto 8px}
-  .tablet-frame .screen{border-radius:8px;overflow:hidden;background:#000;line-height:0}
-  .tablet-frame .screen img{width:100%;height:auto;display:block}
-  .tablet-frame .home{width:24px;height:24px;border:2px solid #2a2e3e;border-radius:50%;margin:8px auto 0}
-  /* All views row */
-  .all-row{display:none;flex-direction:column;gap:48px;align-items:center}
-  .all-row.active{display:flex}
-  .view-group{width:100%}
-  .view-group h3{text-align:center;font-size:12px;letter-spacing:3px;color:#4D96FF;font-weight:700;margin-bottom:24px;opacity:.7}
-  .view-group .devices{display:flex;gap:32px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
-  /* Fallback for missing images */
-  .screen img{background:#12151f}
-  .screen img[src=""],.screen img:not([src]){display:none}
-  .screen:has(img[src=""])::after,.screen:has(img:not([src]))::after{content:"Run e2e tests to generate";display:block;padding:60px 20px;text-align:center;color:#334;font-size:11px;letter-spacing:1px}
-  .empty-note{text-align:center;padding:40px;color:#334;font-size:12px;letter-spacing:1px;border:1px dashed rgba(255,255,255,.04);border-radius:12px;margin:20px auto;max-width:400px}
-  .footer{text-align:center;padding:20px;color:#334;font-size:10px;letter-spacing:1px}
-  @media(max-width:700px){
-    .desktop-frame{width:100%}
-    .tablet-frame{width:100%}
+  :root {
+    --deep: #040810;
+    --glass: rgba(77, 150, 255, .06);
+    --glass-border: rgba(77, 150, 255, .12);
+    --blue: #4D96FF;
+    --blue-glow: rgba(77, 150, 255, .3);
+    --cyan: #5ecfcf;
+    --coral: #ff6b81;
+    --sand: #d0d8e4;
+    --kelp: #2a7a5a;
+    --muted: #3a4a68;
+    --frame-bg: linear-gradient(160deg, #141a2e, #0c1020);
+    --frame-border: rgba(255, 255, 255, .06);
+    --toolbar-bg: rgba(8, 12, 24, .8);
+    --toolbar-border: rgba(255, 255, 255, .04);
+    --url-color: rgba(255, 255, 255, .15);
+    --viewport-bg: #0a1628;
+    --stand-top: rgba(20, 26, 46, .8);
+    --stand-bot: rgba(12, 16, 32, .6);
+    --stand-base-top: rgba(20, 26, 46, .6);
+    --stand-base-bot: rgba(12, 16, 32, .3);
+    --stand-border: rgba(255, 255, 255, .03);
+    --island-bg: rgba(8, 12, 24, .9);
+    --indicator-bg: rgba(255, 255, 255, .08);
+    --ocean1: rgba(14, 40, 78, .8);
+    --ocean2: rgba(30, 80, 120, .3);
+    --ocean3: rgba(20, 60, 100, .2);
+    --caustic1: rgba(77, 150, 255, .6);
+    --caustic2: rgba(94, 207, 207, .4);
+    --particle-bg: rgba(77, 150, 255, .25);
+    --footer-border: rgba(255, 255, 255, .03);
+    --divider-color: rgba(77, 150, 255, .12);
+    --frame-shadow: 0 20px 60px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .03), 0 0 80px rgba(77, 150, 255, .05);
+    --frame-shadow-sm: 0 20px 60px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .03), 0 0 60px rgba(77, 150, 255, .04);
+    color-scheme: dark;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --deep: #f0f2f8;
+      --sand: #1a1e2c;
+      --muted: #6a7a96;
+      --glass: rgba(77, 150, 255, .08);
+      --glass-border: rgba(77, 150, 255, .18);
+      --frame-bg: linear-gradient(160deg, #d8dce8, #c8ccd8);
+      --frame-border: rgba(0, 0, 0, .1);
+      --toolbar-bg: rgba(200, 206, 218, .95);
+      --toolbar-border: rgba(0, 0, 0, .06);
+      --url-color: rgba(0, 0, 0, .25);
+      --viewport-bg: #e8ecf4;
+      --stand-top: rgba(200, 206, 218, .8);
+      --stand-bot: rgba(180, 186, 198, .6);
+      --stand-base-top: rgba(200, 206, 218, .6);
+      --stand-base-bot: rgba(180, 186, 198, .3);
+      --stand-border: rgba(0, 0, 0, .06);
+      --island-bg: rgba(60, 68, 82, .2);
+      --indicator-bg: rgba(0, 0, 0, .1);
+      --ocean1: rgba(180, 210, 240, .5);
+      --ocean2: rgba(160, 200, 230, .3);
+      --ocean3: rgba(170, 205, 235, .2);
+      --caustic1: rgba(77, 150, 255, .15);
+      --caustic2: rgba(94, 207, 207, .1);
+      --particle-bg: rgba(77, 150, 255, .15);
+      --footer-border: rgba(0, 0, 0, .06);
+      --divider-color: rgba(77, 150, 255, .15);
+      --frame-shadow: 0 20px 60px rgba(0, 0, 0, .08), 0 0 0 1px rgba(0, 0, 0, .05);
+      --frame-shadow-sm: 0 20px 60px rgba(0, 0, 0, .06), 0 0 0 1px rgba(0, 0, 0, .04);
+      color-scheme: light;
+    }
+  }
+
+  /* Manual dark override */
+  :root[data-theme="dark"] {
+    --deep: #040810; --sand: #d0d8e4; --muted: #3a4a68;
+    --glass: rgba(77, 150, 255, .06); --glass-border: rgba(77, 150, 255, .12);
+    --frame-bg: linear-gradient(160deg, #141a2e, #0c1020); --frame-border: rgba(255, 255, 255, .06);
+    --toolbar-bg: rgba(8, 12, 24, .8); --toolbar-border: rgba(255, 255, 255, .04);
+    --url-color: rgba(255, 255, 255, .15); --viewport-bg: #0a1628;
+    --stand-top: rgba(20, 26, 46, .8); --stand-bot: rgba(12, 16, 32, .6);
+    --stand-base-top: rgba(20, 26, 46, .6); --stand-base-bot: rgba(12, 16, 32, .3);
+    --stand-border: rgba(255, 255, 255, .03); --island-bg: rgba(8, 12, 24, .9);
+    --indicator-bg: rgba(255, 255, 255, .08);
+    --ocean1: rgba(14, 40, 78, .8); --ocean2: rgba(30, 80, 120, .3); --ocean3: rgba(20, 60, 100, .2);
+    --caustic1: rgba(77, 150, 255, .6); --caustic2: rgba(94, 207, 207, .4);
+    --particle-bg: rgba(77, 150, 255, .25); --footer-border: rgba(255, 255, 255, .03);
+    --divider-color: rgba(77, 150, 255, .12);
+    --frame-shadow: 0 20px 60px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .03), 0 0 80px rgba(77, 150, 255, .05);
+    --frame-shadow-sm: 0 20px 60px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .03), 0 0 60px rgba(77, 150, 255, .04);
+    color-scheme: dark;
+  }
+
+  /* Manual light override */
+  :root[data-theme="light"] {
+    --deep: #f0f2f8; --sand: #1a1e2c; --muted: #6a7a96;
+    --glass: rgba(77, 150, 255, .08); --glass-border: rgba(77, 150, 255, .18);
+    --frame-bg: linear-gradient(160deg, #d8dce8, #c8ccd8); --frame-border: rgba(0, 0, 0, .1);
+    --toolbar-bg: rgba(200, 206, 218, .95); --toolbar-border: rgba(0, 0, 0, .06);
+    --url-color: rgba(0, 0, 0, .25); --viewport-bg: #e8ecf4;
+    --stand-top: rgba(200, 206, 218, .8); --stand-bot: rgba(180, 186, 198, .6);
+    --stand-base-top: rgba(200, 206, 218, .6); --stand-base-bot: rgba(180, 186, 198, .3);
+    --stand-border: rgba(0, 0, 0, .06); --island-bg: rgba(60, 68, 82, .2);
+    --indicator-bg: rgba(0, 0, 0, .1);
+    --ocean1: rgba(180, 210, 240, .5); --ocean2: rgba(160, 200, 230, .3); --ocean3: rgba(170, 205, 235, .2);
+    --caustic1: rgba(77, 150, 255, .15); --caustic2: rgba(94, 207, 207, .1);
+    --particle-bg: rgba(77, 150, 255, .15); --footer-border: rgba(0, 0, 0, .06);
+    --divider-color: rgba(77, 150, 255, .15);
+    --frame-shadow: 0 20px 60px rgba(0, 0, 0, .08), 0 0 0 1px rgba(0, 0, 0, .05);
+    --frame-shadow-sm: 0 20px 60px rgba(0, 0, 0, .06), 0 0 0 1px rgba(0, 0, 0, .04);
+    color-scheme: light;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--deep);
+    color: var(--sand);
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background .3s, color .3s;
+  }
+
+  /* ── Ocean background ── */
+  .ocean-bg {
+    position: fixed; inset: 0; z-index: -1;
+    background:
+      radial-gradient(ellipse 120% 60% at 50% 0%, var(--ocean1) 0%, transparent 70%),
+      radial-gradient(ellipse 80% 50% at 20% 80%, var(--ocean2) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 60%, var(--ocean3) 0%, transparent 50%),
+      var(--deep);
+    transition: background .3s;
+  }
+
+  .caustics {
+    position: fixed; inset: 0; z-index: -1; opacity: .03;
+    background:
+      repeating-conic-gradient(from 0deg at 50% 50%, transparent 0deg, var(--caustic1) 1deg, transparent 2deg) 0 0 / 200px 200px,
+      repeating-conic-gradient(from 45deg at 30% 70%, transparent 0deg, var(--caustic2) 1deg, transparent 3deg) 50px 30px / 180px 180px;
+    animation: causticShift 20s ease-in-out infinite alternate;
+  }
+  @keyframes causticShift {
+    0% { transform: scale(1) rotate(0deg); opacity: .03; }
+    50% { transform: scale(1.1) rotate(2deg); opacity: .05; }
+    100% { transform: scale(1) rotate(-1deg); opacity: .03; }
+  }
+
+  .particles { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+  .particle {
+    position: absolute; width: 3px; height: 3px; border-radius: 50%;
+    background: var(--particle-bg); animation: drift linear infinite;
+  }
+  @keyframes drift {
+    0% { transform: translateY(110vh) translateX(0); opacity: 0; }
+    10% { opacity: 1; } 90% { opacity: 1; }
+    100% { transform: translateY(-10vh) translateX(40px); opacity: 0; }
+  }
+
+  /* ── Hero ── */
+  .hero { text-align: center; padding: 80px 24px 60px; position: relative; }
+  .hero-fish {
+    font-size: 48px; display: inline-block;
+    animation: heroSwim 4s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(77, 150, 255, .3));
+    margin-bottom: 16px;
+  }
+  @keyframes heroSwim {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    25% { transform: translateX(8px) rotate(2deg); }
+    75% { transform: translateX(-8px) rotate(-2deg); }
+  }
+  .hero h1 {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(32px, 6vw, 56px); font-weight: 500; letter-spacing: 12px;
+    color: var(--blue);
+    text-shadow: 0 0 60px rgba(77, 150, 255, .4), 0 0 120px rgba(77, 150, 255, .1);
+    margin-bottom: 16px;
+  }
+  .hero p {
+    font-size: clamp(14px, 2.2vw, 18px); font-weight: 300; color: var(--muted);
+    max-width: 520px; margin: 0 auto 32px; line-height: 1.6;
+  }
+  .hero-cta {
+    display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px;
+    background: linear-gradient(135deg, var(--blue), #3a7de8); border: none; border-radius: 40px;
+    color: #fff; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 600;
+    letter-spacing: 1px; text-decoration: none; cursor: pointer; transition: all .3s ease;
+    box-shadow: 0 4px 24px rgba(77, 150, 255, .3), inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 40px rgba(77, 150, 255, .4), inset 0 1px 0 rgba(255,255,255,.2); }
+  .hero-cta svg { width: 16px; height: 16px; }
+
+  /* ── Features ── */
+  .features { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 64px; }
+  .feat {
+    display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px;
+    border: 1px solid var(--glass-border); background: var(--glass);
+    font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1px; color: var(--muted);
+  }
+  .feat .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .feat .dot.blue { background: var(--blue); }
+  .feat .dot.cyan { background: var(--cyan); }
+  .feat .dot.coral { background: var(--coral); }
+  .feat .dot.green { background: var(--kelp); }
+
+  /* ── Navigation ── */
+  .nav {
+    display: flex; justify-content: center; gap: 2px; padding: 16px 20px;
+    margin-bottom: 56px; position: sticky; top: 0; z-index: 50;
+    background: linear-gradient(var(--deep) 60%, transparent);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  }
+  .nav-item {
+    padding: 10px 24px; border: 1px solid transparent; background: transparent;
+    color: var(--muted); cursor: pointer; font-family: 'DM Mono', monospace;
+    font-size: 11px; font-weight: 400; letter-spacing: 2px; text-transform: uppercase;
+    transition: all .3s ease; position: relative;
+  }
+  .nav-item:first-child { border-radius: 8px 0 0 8px; }
+  .nav-item:last-child { border-radius: 0 8px 8px 0; }
+  .nav-item:hover { color: var(--sand); background: var(--glass); }
+  .nav-item.active {
+    color: var(--blue); background: var(--glass);
+    border-color: var(--glass-border); box-shadow: 0 0 20px rgba(77, 150, 255, .08);
+  }
+  .nav-item.active::after {
+    content: ''; position: absolute; bottom: -1px; left: 20%; right: 20%; height: 2px;
+    background: var(--blue); border-radius: 1px; box-shadow: 0 0 8px var(--blue-glow);
+  }
+
+  /* Theme toggle */
+  .theme-toggle {
+    position: fixed; top: 16px; right: 16px; z-index: 100;
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid var(--glass-border); background: var(--glass);
+    color: var(--muted); font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .3s ease; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .theme-toggle:hover { background: var(--glass-border); color: var(--blue); transform: scale(1.1); }
+
+  /* ── Sections ── */
+  .showcase { max-width: 1300px; margin: 0 auto; padding: 0 24px 120px; }
+  .section { display: none; animation: fadeUp .5s ease; }
+  .section.active { display: block; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  .section-label { text-align: center; margin-bottom: 48px; }
+  .section-label h2 {
+    font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 400;
+    letter-spacing: 4px; color: var(--blue); opacity: .6; margin-bottom: 8px; text-transform: uppercase;
+  }
+  .section-label .divider { width: 40px; height: 1px; background: linear-gradient(90deg, transparent, var(--blue), transparent); margin: 0 auto; opacity: .4; }
+
+  .device-row { display: flex; gap: 40px; justify-content: center; align-items: flex-end; flex-wrap: wrap; margin-bottom: 80px; }
+  .device { position: relative; flex-shrink: 0; transition: transform .4s ease; }
+  .device:hover { transform: translateY(-4px); }
+  .device-tag {
+    text-align: center; font-family: 'DM Mono', monospace; font-size: 9px;
+    letter-spacing: 3px; color: var(--muted); margin-bottom: 16px; text-transform: uppercase;
+  }
+
+  /* ── Frames ── */
+  .frame-desktop {
+    width: 620px; max-width: 88vw; background: var(--frame-bg); border-radius: 14px;
+    border: 1.5px solid var(--frame-border); overflow: hidden; box-shadow: var(--frame-shadow);
+    transition: background .3s, border-color .3s, box-shadow .3s;
+  }
+  .frame-desktop .toolbar {
+    height: 32px; background: var(--toolbar-bg); display: flex; align-items: center;
+    padding: 0 12px; gap: 6px; border-bottom: 1px solid var(--toolbar-border);
+  }
+  .frame-desktop .toolbar .dot { width: 10px; height: 10px; border-radius: 50%; opacity: .7; }
+  .frame-desktop .toolbar .dot:nth-child(1) { background: #ff5f57; }
+  .frame-desktop .toolbar .dot:nth-child(2) { background: #febc2e; }
+  .frame-desktop .toolbar .dot:nth-child(3) { background: #28c840; }
+  .frame-desktop .toolbar .url {
+    flex: 1; text-align: center; font-family: 'DM Mono', monospace;
+    font-size: 9px; color: var(--url-color); letter-spacing: 1px;
+  }
+  .frame-desktop .viewport { line-height: 0; background: var(--viewport-bg); }
+  .frame-desktop .viewport img { width: 100%; height: auto; display: block; }
+  .stand-arm {
+    width: 80px; height: 32px; margin: 0 auto;
+    background: linear-gradient(180deg, var(--stand-top), var(--stand-bot));
+    border-left: 1px solid var(--stand-border); border-right: 1px solid var(--stand-border);
+  }
+  .stand-base {
+    width: 160px; height: 8px; margin: 0 auto; border-radius: 0 0 12px 12px;
+    background: linear-gradient(180deg, var(--stand-base-top), var(--stand-base-bot));
+    border: 1px solid var(--stand-border); border-top: none;
+  }
+
+  .frame-phone {
+    width: 195px; background: var(--frame-bg); border-radius: 28px;
+    border: 2px solid var(--frame-border); padding: 10px 6px; box-shadow: var(--frame-shadow-sm);
+    transition: background .3s, border-color .3s, box-shadow .3s;
+  }
+  .frame-phone .island { width: 48px; height: 5px; background: var(--island-bg); border-radius: 3px; margin: 2px auto 6px; }
+  .frame-phone .viewport { border-radius: 18px; overflow: hidden; line-height: 0; background: var(--viewport-bg); }
+  .frame-phone .viewport img { width: 100%; height: auto; display: block; }
+  .frame-phone .indicator { width: 36px; height: 4px; background: var(--indicator-bg); border-radius: 2px; margin: 8px auto 2px; }
+
+  .frame-tablet {
+    width: 380px; max-width: 80vw; background: var(--frame-bg); border-radius: 18px;
+    border: 2px solid var(--frame-border); padding: 12px 8px; box-shadow: var(--frame-shadow-sm);
+    transition: background .3s, border-color .3s, box-shadow .3s;
+  }
+  .frame-tablet .cam { width: 5px; height: 5px; background: var(--island-bg); border-radius: 50%; margin: 0 auto 8px; }
+  .frame-tablet .viewport { border-radius: 8px; overflow: hidden; line-height: 0; background: var(--viewport-bg); }
+  .frame-tablet .viewport img { width: 100%; height: auto; display: block; }
+
+  /* ── Sections separators ── */
+  .all-section { margin-bottom: 96px; position: relative; }
+  .all-section::after {
+    content: ''; position: absolute; bottom: -48px; left: 10%; right: 10%; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--divider-color), transparent);
+  }
+  .all-section:last-child::after { display: none; }
+
+  /* ── Footer ── */
+  .footer { text-align: center; padding: 40px 24px 48px; border-top: 1px solid var(--footer-border); }
+  .footer p { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 2px; color: var(--muted); opacity: .5; }
+  .footer a { color: var(--blue); text-decoration: none; opacity: .6; transition: opacity .2s; }
+  .footer a:hover { opacity: 1; }
+
+  @media (max-width: 768px) {
+    .hero { padding: 60px 16px 40px; }
+    .hero h1 { letter-spacing: 6px; }
+    .nav { gap: 0; padding-left: 8px; padding-right: 8px; }
+    .nav-item { padding: 8px 12px; font-size: 9px; letter-spacing: 1px; }
+    .device-row { gap: 24px; }
+    .frame-desktop { width: 100%; }
+    .frame-tablet { width: 100%; }
+    .features { gap: 6px; }
+    .feat { font-size: 9px; padding: 5px 10px; }
   }
 </style>
 </head>
 <body>
-<div class="hero">
+
+<div class="ocean-bg"></div>
+<div class="caustics"></div>
+<div class="particles" id="particles"></div>
+
+<button class="theme-toggle" id="themeToggle" title="Toggle theme">&#x263E;</button>
+
+<header class="hero">
+  <div class="hero-fish">&#x1F420;</div>
   <h1>TASKTANK</h1>
-  <p>A gamified task manager with aquarium visuals, Trello-style boards, and peer-to-peer sync</p>
+  <p>Your tasks are fish. Watch them swim. Organize with boards. Sync across devices, encrypted end-to-end.</p>
+  <a href="https://digitalcybersoft.github.io/tasktank/" class="hero-cta">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    Try it live
+  </a>
+</header>
+
+<div class="features">
+  <div class="feat"><span class="dot blue"></span> Aquarium Visuals</div>
+  <div class="feat"><span class="dot cyan"></span> Trello-style Boards</div>
+  <div class="feat"><span class="dot coral"></span> P2P Encrypted Sync</div>
+  <div class="feat"><span class="dot green"></span> PWA + Desktop</div>
 </div>
 
-<div class="tabs">
-  <div class="tab active" data-view="all">All Views</div>
-  <div class="tab" data-view="tank">Tank View</div>
-  <div class="tab" data-view="board">Board View</div>
-  <div class="tab" data-view="detail">Task Detail</div>
-</div>
+<nav class="nav">
+  <button class="nav-item active" data-view="all">Overview</button>
+  <button class="nav-item" data-view="tank">Aquarium</button>
+  <button class="nav-item" data-view="board">Board</button>
+  <button class="nav-item" data-view="detail">Detail</button>
+</nav>
 
-<div class="showcase">
+<main class="showcase">
 
-  <!-- ALL VIEWS -->
-  <div class="all-row active" data-row="all">
-    <div class="view-group">
-      <h3>AQUARIUM VIEW</h3>
-      <div class="devices">
-        <div class="device">
-          <div class="device-label">Desktop</div>
-          <div class="desktop-frame">
-            <div class="titlebar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
-            <div class="screen"><img src="desktop-tank.png" alt="Desktop tank view" loading="lazy"></div>
-            <div class="stand"></div><div class="base"></div>
-          </div>
+  <!-- ALL -->
+  <div class="section active" data-section="all">
+    <div class="all-section">
+      <div class="section-label"><h2>Aquarium View</h2><div class="divider"></div></div>
+      <div class="device-row">
+        <div class="device"><div class="device-tag">Desktop</div>
+          <div class="frame-desktop"><div class="toolbar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">tasktank</div></div><div class="viewport"><img data-img="desktop-tank.png" alt="Desktop aquarium view"></div></div>
+          <div class="stand-arm"></div><div class="stand-base"></div>
         </div>
-        <div class="device">
-          <div class="device-label">Mobile</div>
-          <div class="phone-frame">
-            <div class="notch"></div>
-            <div class="screen"><img src="mobile-tank.png" alt="Mobile tank view" loading="lazy"></div>
-            <div class="home"></div>
-          </div>
+        <div class="device"><div class="device-tag">Mobile</div>
+          <div class="frame-phone"><div class="island"></div><div class="viewport"><img data-img="mobile-tank.png" alt="Mobile aquarium view"></div><div class="indicator"></div></div>
         </div>
-        <div class="device">
-          <div class="device-label">Tablet</div>
-          <div class="tablet-frame">
-            <div class="cam"></div>
-            <div class="screen"><img src="tablet-tank.png" alt="Tablet tank view" loading="lazy"></div>
-            <div class="home"></div>
-          </div>
+        <div class="device"><div class="device-tag">Tablet</div>
+          <div class="frame-tablet"><div class="cam"></div><div class="viewport"><img data-img="tablet-tank.png" alt="Tablet aquarium view"></div></div>
         </div>
       </div>
     </div>
-    <div class="view-group">
-      <h3>BOARD VIEW</h3>
-      <div class="devices">
-        <div class="device">
-          <div class="device-label">Desktop</div>
-          <div class="desktop-frame">
-            <div class="titlebar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
-            <div class="screen"><img src="desktop-board.png" alt="Desktop board view" loading="lazy"></div>
-            <div class="stand"></div><div class="base"></div>
-          </div>
+
+    <div class="all-section">
+      <div class="section-label"><h2>Board View</h2><div class="divider"></div></div>
+      <div class="device-row">
+        <div class="device"><div class="device-tag">Desktop</div>
+          <div class="frame-desktop"><div class="toolbar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">tasktank</div></div><div class="viewport"><img data-img="desktop-board.png" alt="Desktop board view"></div></div>
+          <div class="stand-arm"></div><div class="stand-base"></div>
         </div>
-        <div class="device">
-          <div class="device-label">Mobile</div>
-          <div class="phone-frame">
-            <div class="notch"></div>
-            <div class="screen"><img src="mobile-board.png" alt="Mobile board view" loading="lazy"></div>
-            <div class="home"></div>
-          </div>
+        <div class="device"><div class="device-tag">Mobile</div>
+          <div class="frame-phone"><div class="island"></div><div class="viewport"><img data-img="mobile-board.png" alt="Mobile board view"></div><div class="indicator"></div></div>
         </div>
-        <div class="device">
-          <div class="device-label">Tablet</div>
-          <div class="tablet-frame">
-            <div class="cam"></div>
-            <div class="screen"><img src="tablet-board.png" alt="Tablet board view" loading="lazy"></div>
-            <div class="home"></div>
-          </div>
+        <div class="device"><div class="device-tag">Tablet</div>
+          <div class="frame-tablet"><div class="cam"></div><div class="viewport"><img data-img="tablet-board.png" alt="Tablet board view"></div></div>
         </div>
       </div>
     </div>
-    <div class="view-group">
-      <h3>TASK DETAIL</h3>
-      <div class="devices">
-        <div class="device">
-          <div class="device-label">Desktop Modal</div>
-          <div class="desktop-frame">
-            <div class="titlebar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
-            <div class="screen"><img src="desktop-caught.png" alt="Desktop task detail modal" loading="lazy"></div>
-            <div class="stand"></div><div class="base"></div>
-          </div>
+
+    <div class="all-section">
+      <div class="section-label"><h2>Task Detail</h2><div class="divider"></div></div>
+      <div class="device-row">
+        <div class="device"><div class="device-tag">Desktop Modal</div>
+          <div class="frame-desktop"><div class="toolbar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">tasktank</div></div><div class="viewport"><img data-img="desktop-caught.png" alt="Desktop task detail"></div></div>
+          <div class="stand-arm"></div><div class="stand-base"></div>
         </div>
-        <div class="device">
-          <div class="device-label">Mobile Sheet</div>
-          <div class="phone-frame">
-            <div class="notch"></div>
-            <div class="screen"><img src="mobile-caught.png" alt="Mobile task detail sheet" loading="lazy"></div>
-            <div class="home"></div>
-          </div>
+        <div class="device"><div class="device-tag">Mobile Sheet</div>
+          <div class="frame-phone"><div class="island"></div><div class="viewport"><img data-img="mobile-caught.png" alt="Mobile task detail"></div><div class="indicator"></div></div>
         </div>
-        <div class="device">
-          <div class="device-label">Tablet</div>
-          <div class="tablet-frame">
-            <div class="cam"></div>
-            <div class="screen"><img src="tablet-caught.png" alt="Tablet task detail" loading="lazy"></div>
-            <div class="home"></div>
-          </div>
+        <div class="device"><div class="device-tag">Tablet</div>
+          <div class="frame-tablet"><div class="cam"></div><div class="viewport"><img data-img="tablet-caught.png" alt="Tablet task detail"></div></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- TANK VIEW -->
-  <div class="row" data-row="tank">
-    <div class="device">
-      <div class="device-label">Desktop</div>
-      <div class="desktop-frame">
-        <div class="titlebar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
-        <div class="screen"><img src="desktop-tank.png" alt="Desktop tank view" loading="lazy"></div>
-        <div class="stand"></div><div class="base"></div>
+  <!-- TANK -->
+  <div class="section" data-section="tank">
+    <div class="section-label"><h2>Aquarium View</h2><div class="divider"></div></div>
+    <div class="device-row">
+      <div class="device"><div class="device-tag">Desktop</div>
+        <div class="frame-desktop"><div class="toolbar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">tasktank</div></div><div class="viewport"><img data-img="desktop-tank.png" alt="Desktop aquarium view"></div></div>
+        <div class="stand-arm"></div><div class="stand-base"></div>
       </div>
     </div>
-    <div class="device">
-      <div class="device-label">Mobile</div>
-      <div class="phone-frame">
-        <div class="notch"></div>
-        <div class="screen"><img src="mobile-tank.png" alt="Mobile tank view" loading="lazy"></div>
-        <div class="home"></div>
+    <div class="device-row">
+      <div class="device"><div class="device-tag">Mobile</div>
+        <div class="frame-phone"><div class="island"></div><div class="viewport"><img data-img="mobile-tank.png" alt="Mobile aquarium view"></div><div class="indicator"></div></div>
       </div>
-    </div>
-    <div class="device">
-      <div class="device-label">Tablet</div>
-      <div class="tablet-frame">
-        <div class="cam"></div>
-        <div class="screen"><img src="tablet-tank.png" alt="Tablet tank view" loading="lazy"></div>
-        <div class="home"></div>
+      <div class="device"><div class="device-tag">Tablet</div>
+        <div class="frame-tablet"><div class="cam"></div><div class="viewport"><img data-img="tablet-tank.png" alt="Tablet aquarium view"></div></div>
       </div>
     </div>
   </div>
 
-  <!-- BOARD VIEW -->
-  <div class="row" data-row="board">
-    <div class="device">
-      <div class="device-label">Desktop</div>
-      <div class="desktop-frame">
-        <div class="titlebar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
-        <div class="screen"><img src="desktop-board.png" alt="Desktop board view" loading="lazy"></div>
-        <div class="stand"></div><div class="base"></div>
+  <!-- BOARD -->
+  <div class="section" data-section="board">
+    <div class="section-label"><h2>Board View</h2><div class="divider"></div></div>
+    <div class="device-row">
+      <div class="device"><div class="device-tag">Desktop</div>
+        <div class="frame-desktop"><div class="toolbar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">tasktank</div></div><div class="viewport"><img data-img="desktop-board.png" alt="Desktop board view"></div></div>
+        <div class="stand-arm"></div><div class="stand-base"></div>
       </div>
     </div>
-    <div class="device">
-      <div class="device-label">Mobile</div>
-      <div class="phone-frame">
-        <div class="notch"></div>
-        <div class="screen"><img src="mobile-board.png" alt="Mobile board view" loading="lazy"></div>
-        <div class="home"></div>
+    <div class="device-row">
+      <div class="device"><div class="device-tag">Mobile</div>
+        <div class="frame-phone"><div class="island"></div><div class="viewport"><img data-img="mobile-board.png" alt="Mobile board view"></div><div class="indicator"></div></div>
       </div>
-    </div>
-    <div class="device">
-      <div class="device-label">Tablet</div>
-      <div class="tablet-frame">
-        <div class="cam"></div>
-        <div class="screen"><img src="tablet-board.png" alt="Tablet board view" loading="lazy"></div>
-        <div class="home"></div>
+      <div class="device"><div class="device-tag">Tablet</div>
+        <div class="frame-tablet"><div class="cam"></div><div class="viewport"><img data-img="tablet-board.png" alt="Tablet board view"></div></div>
       </div>
     </div>
   </div>
 
-  <!-- TASK DETAIL -->
-  <div class="row" data-row="detail">
-    <div class="device">
-      <div class="device-label">Desktop Modal</div>
-      <div class="desktop-frame">
-        <div class="titlebar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
-        <div class="screen"><img src="desktop-caught.png" alt="Desktop task detail modal" loading="lazy"></div>
-        <div class="stand"></div><div class="base"></div>
+  <!-- DETAIL -->
+  <div class="section" data-section="detail">
+    <div class="section-label"><h2>Task Detail</h2><div class="divider"></div></div>
+    <div class="device-row">
+      <div class="device"><div class="device-tag">Desktop Modal</div>
+        <div class="frame-desktop"><div class="toolbar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">tasktank</div></div><div class="viewport"><img data-img="desktop-caught.png" alt="Desktop task detail"></div></div>
+        <div class="stand-arm"></div><div class="stand-base"></div>
       </div>
     </div>
-    <div class="device">
-      <div class="device-label">Mobile Sheet</div>
-      <div class="phone-frame">
-        <div class="notch"></div>
-        <div class="screen"><img src="mobile-caught.png" alt="Mobile task detail sheet" loading="lazy"></div>
-        <div class="home"></div>
+    <div class="device-row">
+      <div class="device"><div class="device-tag">Mobile Sheet</div>
+        <div class="frame-phone"><div class="island"></div><div class="viewport"><img data-img="mobile-caught.png" alt="Mobile task detail"></div><div class="indicator"></div></div>
       </div>
-    </div>
-    <div class="device">
-      <div class="device-label">Tablet</div>
-      <div class="tablet-frame">
-        <div class="cam"></div>
-        <div class="screen"><img src="tablet-caught.png" alt="Tablet task detail" loading="lazy"></div>
-        <div class="home"></div>
+      <div class="device"><div class="device-tag">Tablet</div>
+        <div class="frame-tablet"><div class="cam"></div><div class="viewport"><img data-img="tablet-caught.png" alt="Tablet task detail"></div></div>
       </div>
     </div>
   </div>
 
-</div>
+</main>
 
-<div class="footer">Auto-generated screenshots &middot; Updated on each test run</div>
+<footer class="footer">
+  <p>Auto-generated screenshots &middot; <a href="https://digitalcybersoft.github.io/tasktank/">Open TaskTank</a></p>
+</footer>
 
 <script>
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    const view = tab.dataset.view;
-    document.querySelectorAll('[data-row]').forEach(r => r.classList.remove('active'));
-    const target = document.querySelector(`[data-row="${view}"]`);
+// ── Screenshot theme switching ──
+// Detect system preference and set screenshot prefix accordingly
+function getScreenshotTheme() {
+  const forced = document.documentElement.dataset.theme;
+  if (forced) return forced;
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
+function updateScreenshots() {
+  const theme = getScreenshotTheme();
+  const prefix = theme + '-';
+  document.querySelectorAll('img[data-img]').forEach(img => {
+    img.src = prefix + img.dataset.img;
+  });
+  // Update toggle icon
+  document.getElementById('themeToggle').textContent = theme === 'dark' ? '\u263E' : '\u2600';
+}
+
+// System preference change
+window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+  if (!document.documentElement.dataset.theme) updateScreenshots();
+});
+
+// Theme toggle button
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const current = getScreenshotTheme();
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  updateScreenshots();
+});
+
+// Initial load
+updateScreenshots();
+
+// ── Tab switching ──
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const view = btn.dataset.view;
+    document.querySelectorAll('[data-section]').forEach(s => s.classList.remove('active'));
+    const target = document.querySelector(`[data-section="${view}"]`);
     if (target) target.classList.add('active');
   });
+});
+
+// ── Floating particles ──
+(function() {
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 24; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDuration = (12 + Math.random() * 20) + 's';
+    p.style.animationDelay = -(Math.random() * 30) + 's';
+    p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+    p.style.opacity = (.1 + Math.random() * .25);
+    container.appendChild(p);
+  }
+})();
+
+// ── Scroll reveal ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.opacity = '1';
+      entry.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: .1 });
+
+document.querySelectorAll('.device').forEach((d, i) => {
+  d.style.opacity = '0';
+  d.style.transform = 'translateY(30px)';
+  d.style.transition = `opacity .6s ease ${i * .12}s, transform .6s ease ${i * .12}s`;
+  observer.observe(d);
 });
 </script>
 </body>

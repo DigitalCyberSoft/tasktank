@@ -1221,6 +1221,42 @@ describe("E2E — Screenshots", () => {
     await new Promise(r => setTimeout(r, 800));
   }
 
+  // Set the app theme by updating localStorage and reloading
+  async function setTheme(page, theme) {
+    await page.evaluate((t) => {
+      try {
+        const data = JSON.parse(localStorage.getItem("tasktank-v5"));
+        data.theme = t;
+        localStorage.setItem("tasktank-v5", JSON.stringify(data));
+      } catch {}
+    }, theme);
+    await page.goto(SCREENSHOT_URL, { waitUntil: "networkidle0", timeout: 15000 });
+    await waitForText(page, "TASKTANK", 10000);
+    await new Promise(r => setTimeout(r, 800));
+  }
+
+  // Capture all 3 views (tank, board, caught) for a given prefix
+  async function captureViews(page, prefix) {
+    // Tank view — let animations settle
+    await switchToTank(page);
+    await new Promise(r => setTimeout(r, 1500));
+    await page.screenshot({ path: join(SCREENSHOT_DIR, `${prefix}-tank.png`), fullPage: false });
+
+    // Board view
+    await switchToBoard(page);
+    await new Promise(r => setTimeout(r, 800));
+    await page.screenshot({ path: join(SCREENSHOT_DIR, `${prefix}-board.png`), fullPage: false });
+
+    // CaughtPanel modal — click the critical fish card
+    await boardClickCard(page, "Fix login bug on mobile");
+    await new Promise(r => setTimeout(r, 600));
+    await page.screenshot({ path: join(SCREENSHOT_DIR, `${prefix}-caught.png`), fullPage: false });
+
+    // Close caught panel for next round
+    await closeCaughtPanel(page);
+    await new Promise(r => setTimeout(r, 300));
+  }
+
   it("captures desktop screenshots (1280x800)", async () => {
     if (!ssBrowser) return;
     const ctx = await ssBrowser.createBrowserContext();
@@ -1230,23 +1266,17 @@ describe("E2E — Screenshots", () => {
       await waitForSSApp(page);
       await seedData(page);
 
-      // Tank view — let animations settle
-      await new Promise(r => setTimeout(r, 1500));
-      await page.screenshot({ path: join(SCREENSHOT_DIR, "desktop-tank.png"), fullPage: false });
+      // Dark theme
+      await setTheme(page, "dark");
+      await captureViews(page, "dark-desktop");
 
-      // Board view
-      await switchToBoard(page);
-      await new Promise(r => setTimeout(r, 800));
-      await page.screenshot({ path: join(SCREENSHOT_DIR, "desktop-board.png"), fullPage: false });
-
-      // CaughtPanel modal — click the critical fish card
-      await boardClickCard(page, "Fix login bug on mobile");
-      await new Promise(r => setTimeout(r, 600));
-      await page.screenshot({ path: join(SCREENSHOT_DIR, "desktop-caught.png"), fullPage: false });
+      // Light theme
+      await setTheme(page, "light");
+      await captureViews(page, "light-desktop");
     } finally {
       await ctx.close();
     }
-  }, 60000);
+  }, 90000);
 
   it("captures mobile screenshots (390x844)", async () => {
     if (!ssBrowser) return;
@@ -1257,23 +1287,17 @@ describe("E2E — Screenshots", () => {
       await waitForSSApp(page);
       await seedData(page);
 
-      // Tank view (single tank, mobile)
-      await new Promise(r => setTimeout(r, 1500));
-      await page.screenshot({ path: join(SCREENSHOT_DIR, "mobile-tank.png"), fullPage: false });
+      // Dark theme
+      await setTheme(page, "dark");
+      await captureViews(page, "dark-mobile");
 
-      // Board view
-      await switchToBoard(page);
-      await new Promise(r => setTimeout(r, 800));
-      await page.screenshot({ path: join(SCREENSHOT_DIR, "mobile-board.png"), fullPage: false });
-
-      // CaughtPanel bottom sheet — click a card
-      await boardClickCard(page, "Fix login bug on mobile");
-      await new Promise(r => setTimeout(r, 600));
-      await page.screenshot({ path: join(SCREENSHOT_DIR, "mobile-caught.png"), fullPage: false });
+      // Light theme
+      await setTheme(page, "light");
+      await captureViews(page, "light-mobile");
     } finally {
       await ctx.close();
     }
-  }, 60000);
+  }, 90000);
 
   it("captures tablet screenshots (768x1024)", async () => {
     if (!ssBrowser) return;
@@ -1284,23 +1308,17 @@ describe("E2E — Screenshots", () => {
       await waitForSSApp(page);
       await seedData(page);
 
-      // Tank view
-      await new Promise(r => setTimeout(r, 1500));
-      await page.screenshot({ path: join(SCREENSHOT_DIR, "tablet-tank.png"), fullPage: false });
+      // Dark theme
+      await setTheme(page, "dark");
+      await captureViews(page, "dark-tablet");
 
-      // Board view
-      await switchToBoard(page);
-      await new Promise(r => setTimeout(r, 800));
-      await page.screenshot({ path: join(SCREENSHOT_DIR, "tablet-board.png"), fullPage: false });
-
-      // CaughtPanel
-      await boardClickCard(page, "Fix login bug on mobile");
-      await new Promise(r => setTimeout(r, 600));
-      await page.screenshot({ path: join(SCREENSHOT_DIR, "tablet-caught.png"), fullPage: false });
+      // Light theme
+      await setTheme(page, "light");
+      await captureViews(page, "light-tablet");
     } finally {
       await ctx.close();
     }
-  }, 60000);
+  }, 90000);
 });
 
 describe("E2E — Mobile viewport layout", () => {
