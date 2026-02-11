@@ -262,8 +262,41 @@
   .section-label .divider { width: 40px; height: 1px; background: linear-gradient(90deg, transparent, var(--blue), transparent); margin: 0 auto; opacity: .4; }
 
   .device-row { display: flex; gap: 40px; justify-content: center; align-items: flex-end; flex-wrap: wrap; margin-bottom: 80px; }
-  .device { position: relative; flex-shrink: 0; transition: transform .4s ease; }
+  .device { position: relative; flex-shrink: 0; transition: transform .4s ease, z-index 0s; }
   .device:hover { transform: translateY(-4px); }
+
+  /* ── Cascading overlay on desktop ── */
+  @media (min-width: 900px) {
+    .device-row.cascade {
+      position: relative; display: block; height: 520px; margin-bottom: 100px;
+    }
+    .device-row.cascade .device {
+      position: absolute;
+      transition: transform .35s ease, box-shadow .35s ease, filter .35s ease;
+    }
+    .device-row.cascade .device:nth-child(1) { left: 4%; top: 0; z-index: 1; }
+    .device-row.cascade .device:nth-child(2) { left: 32%; top: 60px; z-index: 2; }
+    .device-row.cascade .device:nth-child(3) { left: 62%; top: 110px; z-index: 3; }
+    .device-row.cascade .device:not(:hover) { filter: brightness(.85); }
+    .device-row.cascade .device:hover {
+      z-index: 10;
+      transform: translateY(-8px) scale(1.03);
+      filter: brightness(1);
+    }
+    /* Slightly reduce sizes to fit the overlap */
+    .device-row.cascade .frame-desktop { width: 540px; }
+    .device-row.cascade .frame-tablet { width: 340px; }
+    .device-row.cascade .frame-phone { width: 175px; }
+  }
+  @media (min-width: 1100px) {
+    .device-row.cascade { height: 560px; }
+    .device-row.cascade .device:nth-child(1) { left: 2%; }
+    .device-row.cascade .device:nth-child(2) { left: 34%; top: 70px; }
+    .device-row.cascade .device:nth-child(3) { left: 66%; top: 120px; }
+    .device-row.cascade .frame-desktop { width: 600px; }
+    .device-row.cascade .frame-tablet { width: 360px; }
+    .device-row.cascade .frame-phone { width: 185px; }
+  }
   .device-tag {
     text-align: center; font-family: 'DM Mono', monospace; font-size: 9px;
     letter-spacing: 3px; color: var(--muted); margin-bottom: 16px; text-transform: uppercase;
@@ -384,48 +417,48 @@
   <div class="section active" data-section="all">
     <div class="all-section">
       <div class="section-label"><h2>Aquarium View</h2><div class="divider"></div></div>
-      <div class="device-row">
+      <div class="device-row cascade">
         <div class="device"><div class="device-tag">Desktop</div>
           <div class="frame-desktop"><div class="toolbar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">tasktank</div></div><div class="viewport"><img data-img="desktop-tank.png" alt="Desktop aquarium view"></div></div>
           <div class="stand-arm"></div><div class="stand-base"></div>
         </div>
-        <div class="device"><div class="device-tag">Mobile</div>
-          <div class="frame-phone"><div class="island"></div><div class="viewport"><img data-img="mobile-tank.png" alt="Mobile aquarium view"></div><div class="indicator"></div></div>
-        </div>
         <div class="device"><div class="device-tag">Tablet</div>
           <div class="frame-tablet"><div class="cam"></div><div class="viewport"><img data-img="tablet-tank.png" alt="Tablet aquarium view"></div></div>
+        </div>
+        <div class="device"><div class="device-tag">Mobile</div>
+          <div class="frame-phone"><div class="island"></div><div class="viewport"><img data-img="mobile-tank.png" alt="Mobile aquarium view"></div><div class="indicator"></div></div>
         </div>
       </div>
     </div>
 
     <div class="all-section">
       <div class="section-label"><h2>Board View</h2><div class="divider"></div></div>
-      <div class="device-row">
+      <div class="device-row cascade">
         <div class="device"><div class="device-tag">Desktop</div>
           <div class="frame-desktop"><div class="toolbar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">tasktank</div></div><div class="viewport"><img data-img="desktop-board.png" alt="Desktop board view"></div></div>
           <div class="stand-arm"></div><div class="stand-base"></div>
         </div>
-        <div class="device"><div class="device-tag">Mobile</div>
-          <div class="frame-phone"><div class="island"></div><div class="viewport"><img data-img="mobile-board.png" alt="Mobile board view"></div><div class="indicator"></div></div>
-        </div>
         <div class="device"><div class="device-tag">Tablet</div>
           <div class="frame-tablet"><div class="cam"></div><div class="viewport"><img data-img="tablet-board.png" alt="Tablet board view"></div></div>
+        </div>
+        <div class="device"><div class="device-tag">Mobile</div>
+          <div class="frame-phone"><div class="island"></div><div class="viewport"><img data-img="mobile-board.png" alt="Mobile board view"></div><div class="indicator"></div></div>
         </div>
       </div>
     </div>
 
     <div class="all-section">
       <div class="section-label"><h2>Task Detail</h2><div class="divider"></div></div>
-      <div class="device-row">
+      <div class="device-row cascade">
         <div class="device"><div class="device-tag">Desktop Modal</div>
           <div class="frame-desktop"><div class="toolbar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">tasktank</div></div><div class="viewport"><img data-img="desktop-caught.png" alt="Desktop task detail"></div></div>
           <div class="stand-arm"></div><div class="stand-base"></div>
         </div>
-        <div class="device"><div class="device-tag">Mobile Sheet</div>
-          <div class="frame-phone"><div class="island"></div><div class="viewport"><img data-img="mobile-caught.png" alt="Mobile task detail"></div><div class="indicator"></div></div>
-        </div>
         <div class="device"><div class="device-tag">Tablet</div>
           <div class="frame-tablet"><div class="cam"></div><div class="viewport"><img data-img="tablet-caught.png" alt="Tablet task detail"></div></div>
+        </div>
+        <div class="device"><div class="device-tag">Mobile</div>
+          <div class="frame-phone"><div class="island"></div><div class="viewport"><img data-img="mobile-caught.png" alt="Mobile task detail"></div><div class="indicator"></div></div>
         </div>
       </div>
     </div>
