@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback } from "react";
-import { DEPTH_BAND, SPD, IMP, clamp, todayStr, daysBetween } from "./constants.js";
+import { DEPTH_BAND, SPD, IMP, clamp, todayStr, daysBetween } from "../constants.js";
 
 export default function useAnimationLoop(tanks, caught, showGrid, showSingle, effectiveZoom) {
   const pR=useRef({});const fE=useRef({});const fB=useRef({});const fL=useRef({});

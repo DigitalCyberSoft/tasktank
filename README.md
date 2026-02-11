@@ -4,15 +4,16 @@ A visual task manager where your tasks are fish swimming in a tank. Add tasks, w
 
 **[Try it live](https://digitalcybersoft.github.io/tasktank/)**
 
-![TaskTank](assets/screenshot.png)
+[![TaskTank — aquarium view](public/screenshots/desktop-tank.png)](https://digitalcybersoft.github.io/tasktank/screenshots/)
 
 ## Features
 
 - **Fish = Tasks** — each task is a fish swimming around your tank as a gentle visual reminder
+- **Board View** — Trello-style columns for focused task management (Ctrl+B to toggle)
 - **Multiple Tanks** — organize tasks into separate tanks, swipe between them
 - **Importance Levels** — normal, important (star), critical (fire) with distinct fish colors
 - **Duration Timers** — set 5m, 15m, 30m, 1h, 2h timers or due dates
-- **Catch to Complete** — click a fish to catch it, review in the caught panel
+- **Catch to Complete** — click a fish to catch it, review in the task detail modal
 - **P2P Encrypted Sync** — share tanks via Nostr relays with AES-GCM encryption
 - **WebRTC Direct Connections** — optional peer-to-peer for instant sync on the same network
 - **File Attachments** — attach files to tasks, transferred via WebRTC between devices
@@ -20,6 +21,8 @@ A visual task manager where your tasks are fish swimming in a tank. Add tasks, w
 - **Device Pairing** — pair your devices for automatic cross-device sync
 - **PWA** — installable as a Progressive Web App on any platform
 - **Desktop App** — native desktop builds via Tauri v2
+
+> [View all screenshots](https://digitalcybersoft.github.io/tasktank/screenshots/) — desktop, mobile, and tablet across tank view, board view, and task detail
 
 ## Getting Started
 
@@ -53,7 +56,7 @@ Sharing a tank generates an encrypted share code (or QR code). The other device 
 
 ```bash
 npm test          # 81 unit tests (vitest)
-npm run test:e2e  # 5 E2E tests (Puppeteer + Chrome)
+npm run test:e2e  # 29 E2E tests (Puppeteer + Chrome)
 ```
 
 ## Tech Stack

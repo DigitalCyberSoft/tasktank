@@ -3,7 +3,7 @@
 // ══════════════════════════════════════════════════════════════
 import { SimplePool } from "nostr-tools/pool";
 import { finalizeEvent, getPublicKey } from "nostr-tools/pure";
-import { NOSTR_RELAYS } from "./constants.js";
+import { NOSTR_RELAYS } from "../constants.js";
 
 let pool = null;
 let connectionCb = null;

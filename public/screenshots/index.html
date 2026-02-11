@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskTank — Screenshots</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0e1a;color:#d0d8e4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh}
+  .hero{text-align:center;padding:60px 20px 40px}
+  .hero h1{font-size:clamp(28px,5vw,48px);font-weight:800;letter-spacing:6px;color:#4D96FF;margin-bottom:8px}
+  .hero p{font-size:clamp(13px,2vw,16px);color:#7888a0;max-width:500px;margin:0 auto}
+  .tabs{display:flex;justify-content:center;gap:4px;padding:0 20px;margin-bottom:40px;flex-wrap:wrap}
+  .tab{padding:8px 20px;border-radius:8px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);color:#7888a0;cursor:pointer;font-size:13px;font-weight:600;letter-spacing:1px;transition:all .2s}
+  .tab:hover{background:rgba(77,150,255,.08);color:#7bb8ff}
+  .tab.active{background:rgba(77,150,255,.15);color:#4D96FF;border-color:rgba(77,150,255,.3)}
+  .showcase{max-width:1200px;margin:0 auto;padding:0 20px 80px}
+  .row{display:none;gap:32px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+  .row.active{display:flex}
+  /* Device frames */
+  .device{position:relative;flex-shrink:0}
+  .device-label{text-align:center;font-size:10px;letter-spacing:2px;color:#556;font-weight:700;margin-bottom:12px;text-transform:uppercase}
+  /* Desktop frame */
+  .desktop-frame{background:#1a1e2e;border-radius:12px;border:2px solid #2a2e3e;padding:8px;position:relative;width:640px;max-width:90vw}
+  .desktop-frame .titlebar{height:22px;background:#12151f;border-radius:6px 6px 0 0;display:flex;align-items:center;padding:0 10px;gap:6px;margin-bottom:2px}
+  .desktop-frame .dot{width:8px;height:8px;border-radius:50%}
+  .desktop-frame .dot.r{background:#ff5f57}.desktop-frame .dot.y{background:#febc2e}.desktop-frame .dot.g{background:#28c840}
+  .desktop-frame .screen{border-radius:0 0 6px 6px;overflow:hidden;background:#000;line-height:0}
+  .desktop-frame .screen img{width:100%;height:auto;display:block}
+  .desktop-frame .stand{width:120px;height:24px;background:linear-gradient(#2a2e3e,#1a1e2e);margin:0 auto;border-radius:0 0 4px 4px}
+  .desktop-frame .base{width:180px;height:6px;background:#2a2e3e;margin:0 auto;border-radius:0 0 8px 8px}
+  /* Phone frame */
+  .phone-frame{background:#1a1e2e;border-radius:32px;border:3px solid #2a2e3e;padding:12px 8px;width:210px}
+  .phone-frame .notch{width:60px;height:6px;background:#12151f;border-radius:3px;margin:0 auto 8px}
+  .phone-frame .screen{border-radius:18px;overflow:hidden;background:#000;line-height:0}
+  .phone-frame .screen img{width:100%;height:auto;display:block}
+  .phone-frame .home{width:40px;height:4px;background:#2a2e3e;border-radius:2px;margin:10px auto 0}
+  /* Tablet frame */
+  .tablet-frame{background:#1a1e2e;border-radius:18px;border:3px solid #2a2e3e;padding:14px 10px;width:400px;max-width:85vw}
+  .tablet-frame .cam{width:6px;height:6px;background:#12151f;border-radius:50%;margin:0 auto 8px}
+  .tablet-frame .screen{border-radius:8px;overflow:hidden;background:#000;line-height:0}
+  .tablet-frame .screen img{width:100%;height:auto;display:block}
+  .tablet-frame .home{width:24px;height:24px;border:2px solid #2a2e3e;border-radius:50%;margin:8px auto 0}
+  /* All views row */
+  .all-row{display:none;flex-direction:column;gap:48px;align-items:center}
+  .all-row.active{display:flex}
+  .view-group{width:100%}
+  .view-group h3{text-align:center;font-size:12px;letter-spacing:3px;color:#4D96FF;font-weight:700;margin-bottom:24px;opacity:.7}
+  .view-group .devices{display:flex;gap:32px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+  /* Fallback for missing images */
+  .screen img{background:#12151f}
+  .screen img[src=""],.screen img:not([src]){display:none}
+  .screen:has(img[src=""])::after,.screen:has(img:not([src]))::after{content:"Run e2e tests to generate";display:block;padding:60px 20px;text-align:center;color:#334;font-size:11px;letter-spacing:1px}
+  .empty-note{text-align:center;padding:40px;color:#334;font-size:12px;letter-spacing:1px;border:1px dashed rgba(255,255,255,.04);border-radius:12px;margin:20px auto;max-width:400px}
+  .footer{text-align:center;padding:20px;color:#334;font-size:10px;letter-spacing:1px}
+  @media(max-width:700px){
+    .desktop-frame{width:100%}
+    .tablet-frame{width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="hero">
+  <h1>TASKTANK</h1>
+  <p>A gamified task manager with aquarium visuals, Trello-style boards, and peer-to-peer sync</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-view="all">All Views</div>
+  <div class="tab" data-view="tank">Tank View</div>
+  <div class="tab" data-view="board">Board View</div>
+  <div class="tab" data-view="detail">Task Detail</div>
+</div>
+
+<div class="showcase">
+
+  <!-- ALL VIEWS -->
+  <div class="all-row active" data-row="all">
+    <div class="view-group">
+      <h3>AQUARIUM VIEW</h3>
+      <div class="devices">
+        <div class="device">
+          <div class="device-label">Desktop</div>
+          <div class="desktop-frame">
+            <div class="titlebar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+            <div class="screen"><img src="desktop-tank.png" alt="Desktop tank view" loading="lazy"></div>
+            <div class="stand"></div><div class="base"></div>
+          </div>
+        </div>
+        <div class="device">
+          <div class="device-label">Mobile</div>
+          <div class="phone-frame">
+            <div class="notch"></div>
+            <div class="screen"><img src="mobile-tank.png" alt="Mobile tank view" loading="lazy"></div>
+            <div class="home"></div>
+          </div>
+        </div>
+        <div class="device">
+          <div class="device-label">Tablet</div>
+          <div class="tablet-frame">
+            <div class="cam"></div>
+            <div class="screen"><img src="tablet-tank.png" alt="Tablet tank view" loading="lazy"></div>
+            <div class="home"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="view-group">
+      <h3>BOARD VIEW</h3>
+      <div class="devices">
+        <div class="device">
+          <div class="device-label">Desktop</div>
+          <div class="desktop-frame">
+            <div class="titlebar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+            <div class="screen"><img src="desktop-board.png" alt="Desktop board view" loading="lazy"></div>
+            <div class="stand"></div><div class="base"></div>
+          </div>
+        </div>
+        <div class="device">
+          <div class="device-label">Mobile</div>
+          <div class="phone-frame">
+            <div class="notch"></div>
+            <div class="screen"><img src="mobile-board.png" alt="Mobile board view" loading="lazy"></div>
+            <div class="home"></div>
+          </div>
+        </div>
+        <div class="device">
+          <div class="device-label">Tablet</div>
+          <div class="tablet-frame">
+            <div class="cam"></div>
+            <div class="screen"><img src="tablet-board.png" alt="Tablet board view" loading="lazy"></div>
+            <div class="home"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="view-group">
+      <h3>TASK DETAIL</h3>
+      <div class="devices">
+        <div class="device">
+          <div class="device-label">Desktop Modal</div>
+          <div class="desktop-frame">
+            <div class="titlebar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+            <div class="screen"><img src="desktop-caught.png" alt="Desktop task detail modal" loading="lazy"></div>
+            <div class="stand"></div><div class="base"></div>
+          </div>
+        </div>
+        <div class="device">
+          <div class="device-label">Mobile Sheet</div>
+          <div class="phone-frame">
+            <div class="notch"></div>
+            <div class="screen"><img src="mobile-caught.png" alt="Mobile task detail sheet" loading="lazy"></div>
+            <div class="home"></div>
+          </div>
+        </div>
+        <div class="device">
+          <div class="device-label">Tablet</div>
+          <div class="tablet-frame">
+            <div class="cam"></div>
+            <div class="screen"><img src="tablet-caught.png" alt="Tablet task detail" loading="lazy"></div>
+            <div class="home"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TANK VIEW -->
+  <div class="row" data-row="tank">
+    <div class="device">
+      <div class="device-label">Desktop</div>
+      <div class="desktop-frame">
+        <div class="titlebar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <div class="screen"><img src="desktop-tank.png" alt="Desktop tank view" loading="lazy"></div>
+        <div class="stand"></div><div class="base"></div>
+      </div>
+    </div>
+    <div class="device">
+      <div class="device-label">Mobile</div>
+      <div class="phone-frame">
+        <div class="notch"></div>
+        <div class="screen"><img src="mobile-tank.png" alt="Mobile tank view" loading="lazy"></div>
+        <div class="home"></div>
+      </div>
+    </div>
+    <div class="device">
+      <div class="device-label">Tablet</div>
+      <div class="tablet-frame">
+        <div class="cam"></div>
+        <div class="screen"><img src="tablet-tank.png" alt="Tablet tank view" loading="lazy"></div>
+        <div class="home"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOARD VIEW -->
+  <div class="row" data-row="board">
+    <div class="device">
+      <div class="device-label">Desktop</div>
+      <div class="desktop-frame">
+        <div class="titlebar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <div class="screen"><img src="desktop-board.png" alt="Desktop board view" loading="lazy"></div>
+        <div class="stand"></div><div class="base"></div>
+      </div>
+    </div>
+    <div class="device">
+      <div class="device-label">Mobile</div>
+      <div class="phone-frame">
+        <div class="notch"></div>
+        <div class="screen"><img src="mobile-board.png" alt="Mobile board view" loading="lazy"></div>
+        <div class="home"></div>
+      </div>
+    </div>
+    <div class="device">
+      <div class="device-label">Tablet</div>
+      <div class="tablet-frame">
+        <div class="cam"></div>
+        <div class="screen"><img src="tablet-board.png" alt="Tablet board view" loading="lazy"></div>
+        <div class="home"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TASK DETAIL -->
+  <div class="row" data-row="detail">
+    <div class="device">
+      <div class="device-label">Desktop Modal</div>
+      <div class="desktop-frame">
+        <div class="titlebar"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <div class="screen"><img src="desktop-caught.png" alt="Desktop task detail modal" loading="lazy"></div>
+        <div class="stand"></div><div class="base"></div>
+      </div>
+    </div>
+    <div class="device">
+      <div class="device-label">Mobile Sheet</div>
+      <div class="phone-frame">
+        <div class="notch"></div>
+        <div class="screen"><img src="mobile-caught.png" alt="Mobile task detail sheet" loading="lazy"></div>
+        <div class="home"></div>
+      </div>
+    </div>
+    <div class="device">
+      <div class="device-label">Tablet</div>
+      <div class="tablet-frame">
+        <div class="cam"></div>
+        <div class="screen"><img src="tablet-caught.png" alt="Tablet task detail" loading="lazy"></div>
+        <div class="home"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">Auto-generated screenshots &middot; Updated on each test run</div>
+
+<script>
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const view = tab.dataset.view;
+    document.querySelectorAll('[data-row]').forEach(r => r.classList.remove('active'));
+    const target = document.querySelector(`[data-row="${view}"]`);
+    if (target) target.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

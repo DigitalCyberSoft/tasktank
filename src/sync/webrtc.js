@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════════════════════════
 // WEBRTC — PeerManager for device-to-device DataChannels
 // ══════════════════════════════════════════════════════════════
-import { RTC_CONFIG, DEVICE_ID, FILE_CHUNK_SIZE } from "./constants.js";
+import { RTC_CONFIG, DEVICE_ID, FILE_CHUNK_SIZE } from "../constants.js";
 import { sendOffer, sendAnswer, sendIceCandidate } from "./signaling.js";
 
 const DC_LABEL = "tasktank";

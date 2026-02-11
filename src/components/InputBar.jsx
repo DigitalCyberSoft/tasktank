@@ -1,5 +1,5 @@
-import { IMP, DUR_PRESETS, todayStr } from "./constants.js";
-import { tinyBtn } from "./styles.js";
+import { IMP, DUR_PRESETS, todayStr } from "../constants.js";
+import { tinyBtn } from "../styles.js";
 
 export function DesktopInputBar({ input, setInput, addFish, actTank, newImp, setNewImp, newDur, setNewDur, newDue, setNewDue, setBulkModal }) {
   return(

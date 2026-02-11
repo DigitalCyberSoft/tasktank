@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════════════════════════
 // fileTransfer — chunked file transfer over WebRTC DataChannel
 // ══════════════════════════════════════════════════════════════
-import { FILE_CHUNK_SIZE } from "./constants.js";
+import { FILE_CHUNK_SIZE } from "../constants.js";
 import { getFile, storeFile, hasFile, computeChecksum } from "./fileStore.js";
 
 let _transferCounter = 0;

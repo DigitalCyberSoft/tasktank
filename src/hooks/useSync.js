@@ -2,7 +2,7 @@
 // useSync — React hook bridging Nostr + WebRTC to tank state
 // ══════════════════════════════════════════════════════════════
 import { useState, useEffect, useRef, useCallback } from "react";
-import { DEVICE_ID, NOSTR_RELAYS, PRESENCE_TIMEOUT, NOSTR_PUSH_INTERVAL_CONNECTED } from "./constants.js";
+import { DEVICE_ID, NOSTR_RELAYS, PRESENCE_TIMEOUT, NOSTR_PUSH_INTERVAL_CONNECTED } from "../constants.js";
 import {
   initPool,
   onConnectionChange,
@@ -19,11 +19,11 @@ import {
   testRelays,
   loadCachedRelays,
   ensureRelays,
-} from "./sync.js";
-import { PeerManager } from "./webrtc.js";
-import { subscribeSignaling, startHeartbeatInterval } from "./signaling.js";
-import { FileTransferManager } from "./fileTransfer.js";
-import { hasFile, deleteFilesForFish } from "./fileStore.js";
+} from "../sync/sync.js";
+import { PeerManager } from "../sync/webrtc.js";
+import { subscribeSignaling, startHeartbeatInterval } from "../sync/signaling.js";
+import { FileTransferManager } from "../sync/fileTransfer.js";
+import { hasFile, deleteFilesForFish } from "../sync/fileStore.js";
 
 export default function useSync(tanks, setTanks, initP) {
   const [syncStatus, setSyncStatus] = useState("off");

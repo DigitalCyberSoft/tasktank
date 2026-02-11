@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════════════════════════
 // SIGNALING — WebRTC signaling via Nostr ephemeral events
 // ══════════════════════════════════════════════════════════════
-import { SIGNALING_KIND, PRESENCE_INTERVAL, DEVICE_ID } from "./constants.js";
+import { SIGNALING_KIND, PRESENCE_INTERVAL, DEVICE_ID } from "../constants.js";
 import { publishEphemeral, subscribeEphemeral } from "./sync.js";
 
 // ── Send functions ──

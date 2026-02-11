@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { SPD, DEVICE_ID } from "./constants.js";
-import { iconBtn, tinyBtn } from "./styles.js";
+import { SPD, DEVICE_ID } from "../constants.js";
+import { iconBtn, tinyBtn } from "../styles.js";
 
 function TankRow({tank,index,total,isActive,onSelect,onMove,onRename,onDelete,onSpeed,onLeave}){
   const isNonOwner=tank.ownerId&&tank.ownerId!==DEVICE_ID;

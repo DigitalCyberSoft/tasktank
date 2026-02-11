@@ -2,18 +2,18 @@
 // TRANSFER TESTS — fileStore.js, webrtc.js, fileTransfer.js
 // ══════════════════════════════════════════════════════════════
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { PeerManager } from "./webrtc.js";
-import { FileTransferManager } from "./fileTransfer.js";
+import { PeerManager } from "../src/sync/webrtc.js";
+import { FileTransferManager } from "../src/sync/fileTransfer.js";
 
 // Mock signaling functions for PeerManager tests
-vi.mock("./signaling.js", () => ({
+vi.mock("../src/sync/signaling.js", () => ({
   sendOffer: vi.fn().mockResolvedValue(undefined),
   sendAnswer: vi.fn().mockResolvedValue(undefined),
   sendIceCandidate: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock fileStore for FileTransferManager tests
-vi.mock("./fileStore.js", () => ({
+vi.mock("../src/sync/fileStore.js", () => ({
   openFileDB: vi.fn(),
   storeFile: vi.fn().mockResolvedValue(undefined),
   getFile: vi.fn().mockResolvedValue(null),
@@ -31,7 +31,7 @@ describe("fileStore.js", () => {
   let realFS;
 
   beforeEach(async () => {
-    realFS = await vi.importActual("./fileStore.js");
+    realFS = await vi.importActual("../src/sync/fileStore.js");
     // Reset the cached _dbPromise by deleting old DBs
     try {
       const dbs = await indexedDB.databases();
@@ -154,14 +154,14 @@ describe("webrtc.js — PeerManager", () => {
   });
 
   it("createOffer creates DataChannel and calls sendOffer", async () => {
-    const { sendOffer } = await import("./signaling.js");
+    const { sendOffer } = await import("../src/sync/signaling.js");
     pm.getOrCreateConnection("remote-1", "enc-key", ["wss://relay"]);
     await pm.createOffer("remote-1");
     expect(sendOffer).toHaveBeenCalled();
   });
 
   it("handleOffer sets remote description and creates answer", async () => {
-    const { sendAnswer } = await import("./signaling.js");
+    const { sendAnswer } = await import("../src/sync/signaling.js");
     await pm.handleOffer("remote-2", { type: "offer", sdp: "remote-offer" }, "enc-key", ["wss://relay"]);
     const entry = pm._conns["remote-2"];
     expect(entry.remoteDescSet).toBe(true);
@@ -314,7 +314,7 @@ describe("fileTransfer.js — FileTransferManager", () => {
     ftm = new FileTransferManager(sendFn, mockPM);
 
     // Reset mocked fileStore functions
-    const fs = await import("./fileStore.js");
+    const fs = await import("../src/sync/fileStore.js");
     fs.getFile.mockReset().mockResolvedValue(null);
     fs.storeFile.mockReset().mockResolvedValue(undefined);
     fs.hasFile.mockReset().mockResolvedValue(false);
@@ -352,7 +352,7 @@ describe("fileTransfer.js — FileTransferManager", () => {
   });
 
   it("_handleOffer auto-requests if file not local", async () => {
-    const fs = await import("./fileStore.js");
+    const fs = await import("../src/sync/fileStore.js");
     fs.hasFile.mockResolvedValue(false);
     await ftm._handleOffer("remote-1", {
       type: "file.offer", fileId: "f1", name: "test.txt", size: 100,
@@ -363,7 +363,7 @@ describe("fileTransfer.js — FileTransferManager", () => {
   });
 
   it("_handleOffer skips if file already exists", async () => {
-    const fs = await import("./fileStore.js");
+    const fs = await import("../src/sync/fileStore.js");
     fs.hasFile.mockResolvedValue(true);
     await ftm._handleOffer("remote-1", {
       type: "file.offer", fileId: "f1", name: "test.txt", size: 100,
@@ -372,7 +372,7 @@ describe("fileTransfer.js — FileTransferManager", () => {
   });
 
   it("_handleRequest sends error if file not found", async () => {
-    const fs = await import("./fileStore.js");
+    const fs = await import("../src/sync/fileStore.js");
     fs.getFile.mockResolvedValue(null);
     await ftm._handleRequest("remote-1", { fileId: "f-missing", transferId: "t1" });
     expect(sendFn).toHaveBeenCalledTimes(1);
@@ -380,7 +380,7 @@ describe("fileTransfer.js — FileTransferManager", () => {
   });
 
   it("_handleRequest sends chunks for existing file", async () => {
-    const fs = await import("./fileStore.js");
+    const fs = await import("../src/sync/fileStore.js");
     const blob = new Blob(["hello world test data"]);
     fs.getFile.mockResolvedValue({ blob, name: "test.txt", mimeType: "text/plain" });
     await ftm._handleRequest("remote-1", { fileId: "f1", transferId: "t1" });
@@ -405,7 +405,7 @@ describe("fileTransfer.js — FileTransferManager", () => {
   });
 
   it("_handleComplete stores file and fires onFileReceived", async () => {
-    const fs = await import("./fileStore.js");
+    const fs = await import("../src/sync/fileStore.js");
     fs.computeChecksum.mockResolvedValue("matching-checksum");
     fs.storeFile.mockResolvedValue(undefined);
 
@@ -427,7 +427,7 @@ describe("fileTransfer.js — FileTransferManager", () => {
   });
 
   it("_handleComplete rejects on checksum mismatch", async () => {
-    const fs = await import("./fileStore.js");
+    const fs = await import("../src/sync/fileStore.js");
     fs.computeChecksum.mockResolvedValue("wrong-checksum");
 
     ftm._incoming.set("t1", {

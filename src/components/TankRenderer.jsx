@@ -1,5 +1,5 @@
 import FishSVG from "./FishSVG.jsx";
-import { IMP, durLabel } from "./constants.js";
+import { IMP, durLabel } from "../constants.js";
 
 export default function TankRenderer({ tank, caught, showSingle, effectiveZoom, flushTid, catchFish, pR, fE, fB, fL, tE, dueLabel, truncLen }) {
   const stress=Math.min((tank.fishes||[]).length/10,1);

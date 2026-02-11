@@ -7,15 +7,15 @@ import {
   loadSyncKeys, saveSyncKeys, loadCachedRelays,
   pushTankMeta, pushFish, tombstoneFish, pushPeerInfo, pushFullTank,
   subscribeTank, initPool,
-} from "./sync.js";
+} from "../src/sync/sync.js";
 import {
   sendOffer, sendAnswer, sendIceCandidate, sendHeartbeat,
   subscribeSignaling, startHeartbeatInterval,
-} from "./signaling.js";
+} from "../src/sync/signaling.js";
 import {
   loadDeviceGroup, saveDeviceGroup, clearDeviceGroup,
   generateDevicePairCode, parseDevicePairCode, checkDeviceLimit,
-} from "./deviceGroup.js";
+} from "../src/sync/deviceGroup.js";
 
 // ══════════════════════════════════════════════════════════════
 // sync.js — Crypto & Keys

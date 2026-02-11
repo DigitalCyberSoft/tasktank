@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════════════════════════
 // DEVICE GROUP — device-level pairing, storage, and channel protocol
 // ══════════════════════════════════════════════════════════════
-import { DEVICE_ID, MAX_SYNC_DEVICES, DEVICE_PAIR_CODE_VERSION, NOSTR_RELAYS } from "./constants.js";
+import { DEVICE_ID, MAX_SYNC_DEVICES, DEVICE_PAIR_CODE_VERSION, NOSTR_RELAYS } from "../constants.js";
 import {
   generateSyncKey, generateSyncId, encrypt, decrypt, deriveKeypair,
   initPool, loadCachedRelays, ensureRelays,

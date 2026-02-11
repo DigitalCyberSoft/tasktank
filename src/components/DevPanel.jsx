@@ -2,8 +2,8 @@
 // DEV PANEL — Debug panel + mock peer simulator (dev-only)
 // ══════════════════════════════════════════════════════════════
 import { useState, useEffect, useRef, useCallback } from "react";
-import { uid, NOSTR_RELAYS } from "./constants.js";
-import { getConnectedRelays, testRelays, pushFish, pushTankMeta, tombstoneFish } from "./sync.js";
+import { uid, NOSTR_RELAYS } from "../constants.js";
+import { getConnectedRelays, testRelays, pushFish, pushTankMeta, tombstoneFish } from "../sync/sync.js";
 
 const MOCK_DEVICE_ID = "mock-" + uid();
 

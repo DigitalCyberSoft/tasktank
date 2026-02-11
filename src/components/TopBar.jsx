@@ -1,7 +1,8 @@
-import { SPD } from "./constants.js";
-import { iconBtn } from "./styles.js";
+import { SPD } from "../constants.js";
+import { iconBtn } from "../styles.js";
 
-export default function TopBar({ showSingle, setDrawer, stStatus, setJoinModal, actTank, headerEdit, headerName, setHeaderName, setHeaderEdit, saveHeaderName, effectiveZoom, cycleZoom, tanks, setListView, setShareModal, cycleSpeed, openPurge, isReadonly, setSettingsOpen, peerConnStatus }) {
+export default function TopBar({ showSingle, setDrawer, stStatus, setJoinModal, actTank, headerEdit, headerName, setHeaderName, setHeaderEdit, saveHeaderName, effectiveZoom, cycleZoom, tanks, setListView, setShareModal, cycleSpeed, openPurge, isReadonly, setSettingsOpen, peerConnStatus, viewMode, setViewMode }) {
+  const isBoard=viewMode==="board";
   return(
     <div style={{padding:"8px 12px",display:"flex",alignItems:"center",gap:8,background:"var(--bar,rgba(5,9,18,.96))",borderBottom:"1px solid var(--brd2,rgba(255,255,255,.03))",zIndex:20,flexShrink:0}}>
       {showSingle&&<button onClick={()=>setDrawer(true)} style={iconBtn}>{"\u2630"}</button>}
@@ -18,16 +19,21 @@ export default function TopBar({ showSingle, setDrawer, stStatus, setJoinModal, 
         </span>
       )):(<span style={{flex:1}}/>)}
       <div style={{display:"flex",gap:4,alignItems:"center"}}>
-        {/* Zoom controls */}
-        {tanks.length>1&&(<div style={{display:"flex",alignItems:"center",gap:2,background:"var(--inp,rgba(255,255,255,.03))",borderRadius:5,padding:"2px 3px",border:"1px solid var(--brd,rgba(255,255,255,.04))"}}>
+        {/* View toggle (tank/board) */}
+        {tanks.length>0&&(<div style={{display:"flex",alignItems:"center",background:"var(--inp,rgba(255,255,255,.03))",borderRadius:5,border:"1px solid var(--brd,rgba(255,255,255,.04))"}}>
+          <button onClick={()=>setViewMode("tank")} title="Tank view" style={{...iconBtn,fontSize:showSingle?10:12,padding:showSingle?"3px 6px":"4px 8px",background:!isBoard?"rgba(77,150,255,.15)":"transparent",color:!isBoard?"#4D96FF":"var(--tx3,#556)",borderRadius:"5px 0 0 5px",border:"none"}}>{"\uD83D\uDC20"}</button>
+          <button onClick={()=>setViewMode("board")} title="Board view (Ctrl+B)" style={{...iconBtn,fontSize:showSingle?10:12,padding:showSingle?"3px 6px":"4px 8px",background:isBoard?"rgba(77,150,255,.15)":"transparent",color:isBoard?"#4D96FF":"var(--tx3,#556)",borderRadius:"0 5px 5px 0",border:"none"}}>{"\u2630"}</button>
+        </div>)}
+        {/* Zoom controls (hidden in board mode) */}
+        {!isBoard&&tanks.length>1&&(<div style={{display:"flex",alignItems:"center",gap:2,background:"var(--inp,rgba(255,255,255,.03))",borderRadius:5,padding:"2px 3px",border:"1px solid var(--brd,rgba(255,255,255,.04))"}}>
           <button onClick={()=>cycleZoom(1)} title="Zoom out (see more tanks)" style={{...iconBtn,fontSize:showSingle?10:12,padding:showSingle?"3px 5px":"4px 7px",opacity:effectiveZoom>=6?0.2:0.7}}>{"\uD83D\uDD0D\u207B"}</button>
           <span style={{fontSize:showSingle?7:10,opacity:.3,minWidth:showSingle?14:18,textAlign:"center",fontWeight:700}}>{effectiveZoom===1?"1":effectiveZoom===0?"A":effectiveZoom}</span>
           <button onClick={()=>cycleZoom(-1)} title="Zoom in (see fewer tanks)" style={{...iconBtn,fontSize:showSingle?10:12,padding:showSingle?"3px 5px":"4px 7px",opacity:effectiveZoom<=1?0.2:0.7}}>{"\uD83D\uDD0D\u207A"}</button>
         </div>)}
-        {actTank&&showSingle&&<button onClick={()=>setListView(true)} style={iconBtn} title="List view">{"\u2630"}</button>}
+        {!isBoard&&actTank&&showSingle&&<button onClick={()=>setListView(true)} style={iconBtn} title="List view">{"\u2630"}</button>}
         {actTank&&showSingle&&<button onClick={()=>setShareModal(actTank.id)} style={{...iconBtn,fontSize:11}} title="Share tank">{"\uD83D\uDD17"}</button>}
         {actTank&&showSingle&&!isReadonly&&<button onClick={()=>cycleSpeed(actTank.id)} style={iconBtn} title={SPD[actTank.speedIdx??2].label}>{SPD[actTank.speedIdx??2].icon}</button>}
-        {actTank&&!isReadonly&&(actTank.fishes||[]).length>0&&<button onClick={openPurge} style={{...iconBtn,color:"#FF4757",fontSize:showSingle?11:14}}>{"\u2622"}</button>}
+        {!isBoard&&actTank&&!isReadonly&&(actTank.fishes||[]).length>0&&<button onClick={openPurge} style={{...iconBtn,color:"#FF4757",fontSize:showSingle?11:14}}>{"\u2622"}</button>}
         <button onClick={()=>setSettingsOpen(p=>!p)} style={{...iconBtn,fontSize:showSingle?11:13}} title="Settings">{"\u2699\uFE0F"}</button>
       </div>
     </div>);

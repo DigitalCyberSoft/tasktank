@@ -2,13 +2,13 @@
 // useDeviceGroup — React hook for device-level pairing
 // ══════════════════════════════════════════════════════════════
 import { useState, useEffect, useRef, useCallback } from "react";
-import { DEVICE_ID, NOSTR_RELAYS } from "./constants.js";
-import { generateSyncKey, generateSyncId, loadCachedRelays } from "./sync.js";
+import { DEVICE_ID, NOSTR_RELAYS } from "../constants.js";
+import { generateSyncKey, generateSyncId, loadCachedRelays } from "../sync/sync.js";
 import {
   loadDeviceGroup, saveDeviceGroup, clearDeviceGroup,
   generateDevicePairCode, publishTankKeys, subscribeTankKeys,
   publishDeviceSignal, subscribeDeviceSignals, checkDeviceLimit,
-} from "./deviceGroup.js";
+} from "../sync/deviceGroup.js";
 
 export default function useDeviceGroup(tanks, setTanks, initP, shareTank, joinTank, unsyncTank, getSyncKeys) {
   const [deviceGroup, setDeviceGroup] = useState(() => loadDeviceGroup());

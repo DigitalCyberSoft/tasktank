@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { IMP, DUR_PRESETS, durLabel, todayStr, daysBetween, fmtDate, DEVICE_ID, nowISO, exportPlain, exportRich } from "./constants.js";
-import { generateDevicePairCode } from "./deviceGroup.js";
-import { iconBtn, tinyBtn } from "./styles.js";
+import { IMP, DUR_PRESETS, durLabel, todayStr, daysBetween, fmtDate, DEVICE_ID, nowISO, exportPlain, exportRich } from "../constants.js";
+import { generateDevicePairCode } from "../sync/deviceGroup.js";
+import { iconBtn, tinyBtn } from "../styles.js";
 
 // ══════════════════════════════════════════════════════════════
 // DELETE MODAL

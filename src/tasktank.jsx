@@ -1,19 +1,20 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { MAX_TANKS, COLORS, SPD, IMP, DEPTH_BAND, DUR_PRESETS, DEVICE_ID, pick, uid, clamp, todayStr, daysBetween, getGrid, getZoomGrid, durLabel, nowISO, db, NOSTR_RELAYS, SYNC_CODE_VERSION, MAX_SYNC_DEVICES, MAX_FILE_SIZE } from "./constants.js";
-import { storeFile, computeChecksum, deleteFilesForFish, deleteFilesForTank } from "./fileStore.js";
-import useSync from "./useSync.js";
-import useDeviceGroup from "./useDeviceGroup.js";
-import useBroadcastSync from "./useBroadcastSync.js";
+import { storeFile, computeChecksum, deleteFilesForFish, deleteFilesForTank } from "./sync/fileStore.js";
+import useSync from "./hooks/useSync.js";
+import useDeviceGroup from "./hooks/useDeviceGroup.js";
+import useBroadcastSync from "./hooks/useBroadcastSync.js";
 import { iconBtn, gridCardBtn } from "./styles.js";
-import useAnimationLoop from "./useAnimationLoop.js";
-import TankRenderer from "./TankRenderer.jsx";
-import CaughtPanel from "./CaughtPanel.jsx";
-import TopBar from "./TopBar.jsx";
-import TankDrawer from "./TankDrawer.jsx";
-import { DesktopInputBar, MobileInputBar } from "./InputBar.jsx";
-import { DeleteModal, NewTankModal, ListViewOverlay, PurgeOverlay, ShareModal, JoinModal, BulkAddModal, DevicePairModal } from "./Modals.jsx";
+import BoardView from "./components/BoardView.jsx";
+import useAnimationLoop from "./hooks/useAnimationLoop.js";
+import TankRenderer from "./components/TankRenderer.jsx";
+import CaughtPanel from "./components/CaughtPanel.jsx";
+import TopBar from "./components/TopBar.jsx";
+import TankDrawer from "./components/TankDrawer.jsx";
+import { DesktopInputBar, MobileInputBar } from "./components/InputBar.jsx";
+import { DeleteModal, NewTankModal, ListViewOverlay, PurgeOverlay, ShareModal, JoinModal, BulkAddModal, DevicePairModal } from "./components/Modals.jsx";
 
-const DevPanel = import.meta.env.DEV ? lazy(() => import("./DevPanel.jsx")) : null;
+const DevPanel = import.meta.env.DEV ? lazy(() => import("./components/DevPanel.jsx")) : null;
 
 // ══════════════════════════════════════════════════════════════
 // MAIN
@@ -50,9 +51,13 @@ export default function TaskTankApp(){
   const [settingsOpen,setSettingsOpen]=useState(false);
   const [devicePairModal,setDevicePairModal]=useState(false);
   const [devPanelOpen,setDevPanelOpen]=useState(false);
+  const [viewMode,setViewMode]=useState("tank"); // "tank" | "board"
 
   // Ctrl+Shift+D toggles dev panel
   useEffect(()=>{if(!import.meta.env.DEV)return;const h=e=>{if(e.ctrlKey&&e.shiftKey&&e.key==="D"){e.preventDefault();setDevPanelOpen(v=>!v);}};window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h);},[]);
+
+  // Ctrl+B toggles board/tank view
+  useEffect(()=>{const h=e=>{if(e.ctrlKey&&!e.shiftKey&&!e.altKey&&e.key==="b"){e.preventDefault();setViewMode(v=>v==="board"?"tank":"board");}};window.addEventListener("keydown",h);return()=>window.removeEventListener("keydown",h);},[]);
 
   // System theme detection
   const [sysTheme,setSysTheme]=useState(()=>typeof window!=="undefined"&&window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark");
@@ -100,14 +105,14 @@ export default function TaskTankApp(){
   useEffect(()=>{db.load().then(d=>{
     if(d?.tanks?.length){setTanks(d.tanks);setActiveId(d.activeId||d.tanks[0].id);
       d.tanks.forEach(t=>{(t.fishes||[]).forEach(f=>initP(f.id,f.completed?"completed":(f.importance||"normal")));surfT.current[t.id]=180+Math.random()*250;});
-      if(d.opLog)setOpLog(d.opLog);if(d.viewZoom!=null)setViewZoom(d.viewZoom);if(d.uiZoom!=null)setUiZoom(d.uiZoom);if(d.theme)setTheme(d.theme);}
+      if(d.opLog)setOpLog(d.opLog);if(d.viewZoom!=null)setViewZoom(d.viewZoom);if(d.uiZoom!=null)setUiZoom(d.uiZoom);if(d.theme)setTheme(d.theme);if(d.viewMode)setViewMode(d.viewMode);}
     setReady(true);
     // Auto-open JoinModal if ?pair= param present
     const params=new URLSearchParams(window.location.search);
     const pairCode=params.get("pair");
     if(pairCode){initialPairCode.current=pairCode;setJoinModal(true);history.replaceState(null,"",window.location.pathname);}
   });},[initP]);
-  useEffect(()=>{if(ready)db.save({tanks,activeId,opLog,deviceId:DEVICE_ID,viewZoom,uiZoom,theme,v:5});},[tanks,activeId,opLog,viewZoom,uiZoom,theme,ready]);
+  useEffect(()=>{if(ready)db.save({tanks,activeId,opLog,deviceId:DEVICE_ID,viewZoom,uiZoom,theme,viewMode,v:5});},[tanks,activeId,opLog,viewZoom,uiZoom,theme,viewMode,ready]);
 
   // SWIPE (mobile single view)
   const navTank=useCallback(dir=>{setActiveId(prev=>{const ts=tanks;const i=ts.findIndex(t=>t.id===prev);return ts[clamp(i+dir,0,ts.length-1)]?.id??prev;});},[tanks]);
@@ -130,10 +135,11 @@ export default function TaskTankApp(){
   const cycleSpeed=tid=>{setTanks(p=>p.map(t=>t.id===tid?{...t,speedIdx:((t.speedIdx??2)+1)%SPD.length}:t));log("tank.speed",{tankId:tid});};
 
   // FISH CRUD
-  const addFish=()=>{const t=input.trim();if(!t||!activeId)return;const id=uid();const imp=newImp||"normal";const due=newDue||null;const dur=newDur||null;initP(id,imp);setTanks(p=>p.map(tk=>tk.id===activeId?{...tk,fishes:[...(tk.fishes||[]),{id,task:t,color:pick(COLORS),importance:imp,dueDate:due,duration:dur,completed:false,checklist:[],links:[],attachments:[]}]}:tk));log("fish.add",{tankId:activeId,fishId:id,task:t,importance:imp,dueDate:due,duration:dur});setInput("");};
+  const addFish=()=>{const t=input.trim();if(!t||!activeId)return;const id=uid();const imp=newImp||"normal";const due=newDue||null;const dur=newDur||null;initP(id,imp);setTanks(p=>p.map(tk=>tk.id===activeId?{...tk,fishes:[...(tk.fishes||[]),{id,task:t,color:pick(COLORS),importance:imp,dueDate:due,duration:dur,completed:false,description:"",checklist:[],links:[],attachments:[]}]}:tk));log("fish.add",{tankId:activeId,fishId:id,task:t,importance:imp,dueDate:due,duration:dur});setInput("");};
+  const addFishToTank=(tankId,task,imp="normal",due=null,dur=null)=>{if(!task?.trim()||!tankId)return;const id=uid();initP(id,imp);setTanks(p=>p.map(tk=>tk.id===tankId?{...tk,fishes:[...(tk.fishes||[]),{id,task:task.trim(),color:pick(COLORS),importance:imp,dueDate:due,duration:dur,completed:false,description:"",checklist:[],links:[],attachments:[]}]}:tk));log("fish.add",{tankId,fishId:id,task:task.trim(),importance:imp,dueDate:due,duration:dur});};
   const bulkAddFish=(lines,imp,dur)=>{
     if(!activeId||!lines.length)return;
-    const newFishes=lines.map(task=>{const id=uid();initP(id,imp);return{id,task,color:pick(COLORS),importance:imp,dueDate:null,duration:dur,completed:false,checklist:[],links:[],attachments:[]};});
+    const newFishes=lines.map(task=>{const id=uid();initP(id,imp);return{id,task,color:pick(COLORS),importance:imp,dueDate:null,duration:dur,completed:false,description:"",checklist:[],links:[],attachments:[]};});
     setTanks(p=>p.map(tk=>tk.id===activeId?{...tk,fishes:[...(tk.fishes||[]),...newFishes]}:tk));
     newFishes.forEach(f=>log("fish.add",{tankId:activeId,fishId:f.id,task:f.task,importance:imp,dueDate:null,duration:dur}));
   };
@@ -302,6 +308,7 @@ export default function TaskTankApp(){
         @keyframes vSpin{from{transform:rotate(0)}to{transform:rotate(1080deg)}}
         @keyframes vPulse{0%,100%{opacity:.15;transform:scale(.7)}50%{opacity:.5;transform:scale(1.3)}}
         @keyframes impP{0%,100%{opacity:.5}50%{opacity:1}}
+        @keyframes scaleIn{from{opacity:0;transform:translate(-50%,-50%) scale(.95)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
         .fhit{cursor:pointer;transition:filter .12s;-webkit-tap-highlight-color:transparent}
         .fhit:hover{filter:brightness(1.5) drop-shadow(0 0 14px rgba(255,255,255,.3))!important}
         [data-theme="light"] .fhit:hover{filter:brightness(0.85) drop-shadow(0 0 14px rgba(0,0,0,.15))!important}
@@ -322,16 +329,22 @@ export default function TaskTankApp(){
         setHeaderEdit={setHeaderEdit} saveHeaderName={saveHeaderName} effectiveZoom={effectiveZoom}
         cycleZoom={cycleZoom} tanks={tanks} setListView={setListView} setShareModal={setShareModal}
         cycleSpeed={cycleSpeed} openPurge={openPurge} isReadonly={isReadonly}
-        setSettingsOpen={setSettingsOpen} peerConnStatus={peerConnectionStatus}/>
+        setSettingsOpen={setSettingsOpen} peerConnStatus={peerConnectionStatus}
+        viewMode={viewMode} setViewMode={setViewMode}/>
 
       {/* ══ BODY ══ */}
-      {tanks.length===0&&!showGrid?(
+      {tanks.length===0?(
         <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,padding:20}}>
           <div style={{fontSize:48,opacity:.15}}>{"\uD83D\uDC20"}</div>
           <div style={{fontSize:14,opacity:.2,letterSpacing:4,fontWeight:700}}>TASKTANK</div>
           <div style={{fontSize:10,opacity:.1,textAlign:"center",maxWidth:220,lineHeight:1.6}}>Your tasks are fish. They swim to remind you. Create your first tank.</div>
           <button onClick={openNewTank} style={{marginTop:8,padding:"10px 24px",background:"linear-gradient(135deg,#4D96FF,#6BCB77)",border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"inherit",letterSpacing:1}}>+ Create Tank</button>
         </div>
+      ):viewMode==="board"?(
+        <BoardView tanks={tanks} activeId={activeId} setActiveId={setActiveId} catchFish={catchFish}
+          toggleFishComplete={toggleFishComplete} addFishToTank={addFishToTank} openNewTank={openNewTank}
+          cycleSpeed={cycleSpeed} setShareModal={setShareModal} setDelModal={setDelModal}
+          renameTank={renameTank} moveTank={moveTank} MAX_TANKS={MAX_TANKS} leaveTank={leaveTank}/>
       ):showGrid?(
         /* ── DESKTOP GRID ── */
         <div style={{flex:1,display:"grid",gridTemplateColumns:`repeat(${grid.c},1fr)`,gridTemplateRows:`repeat(${grid.r},1fr)`,gap:5,padding:5,overflow:"hidden",minHeight:0,position:"relative",zIndex:1}}>
@@ -386,21 +399,21 @@ export default function TaskTankApp(){
       )}
 
       {/* ── Desktop input bar (grid mode) ── */}
-      {showGrid&&tanks.length>0&&!isReadonly&&(
+      {showGrid&&viewMode==="tank"&&tanks.length>0&&!isReadonly&&(
         <DesktopInputBar input={input} setInput={setInput} addFish={addFish} actTank={actTank}
           newImp={newImp} setNewImp={setNewImp} newDur={newDur} setNewDur={setNewDur}
           newDue={newDue} setNewDue={setNewDue} setBulkModal={setBulkModal}/>
       )}
 
       {/* ── Mobile bottom bar ── */}
-      {showSingle&&tanks.length>0&&!isReadonly&&(
+      {showSingle&&viewMode==="tank"&&tanks.length>0&&!isReadonly&&(
         <MobileInputBar input={input} setInput={setInput} addFish={addFish} actTank={actTank}
           newImp={newImp} setNewImp={setNewImp} newDur={newDur} setNewDur={setNewDur}
           newDue={newDue} setNewDue={setNewDue} setBulkModal={setBulkModal}
           tanks={tanks} activeId={activeId} setActiveId={setActiveId} navTank={navTank}/>
       )}
       {/* ── Readonly mobile nav (no input, just nav dots + label) ── */}
-      {showSingle&&tanks.length>0&&isReadonly&&(
+      {showSingle&&viewMode==="tank"&&tanks.length>0&&isReadonly&&(
         <div style={{background:"var(--bar,rgba(5,9,18,.96))",borderTop:"1px solid var(--brd2,rgba(255,255,255,.03))",padding:"8px 12px calc(8px + env(safe-area-inset-bottom, 0px))",flexShrink:0,zIndex:15,textAlign:"center"}}>
           <div style={{fontSize:9,color:"#4D96FF",fontWeight:700,letterSpacing:2,marginBottom:4}}>VIEW ONLY</div>
           {tanks.length>1&&<div style={{display:"flex",gap:4,justifyContent:"center"}}>
